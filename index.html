@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inruim Systeem</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #F7FAFC; min-height: 100vh; }
+
+  /* Header */
+  .header { background: #1E3A5F; height: 60px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+  .header-logo { width: 32px; height: 32px; background: #3182CE; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .header-title { color: white; font-weight: 700; font-size: 17px; margin-left: 12px; }
+  .header-left { display: flex; align-items: center; }
+  .btn-terug { background: transparent; border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 6px; padding: 6px 14px; cursor: pointer; font-size: 13px; display: none; }
+
+  /* Schermen */
+  .scherm { display: none; max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+  .scherm.actief { display: block; }
+
+  /* Zoekscherm */
+  .card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); border: 1px solid #E2E8F0; margin-bottom: 16px; }
+  h1 { color: #1E3A5F; font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .subtitel { color: #718096; font-size: 14px; margin-bottom: 24px; }
+  label { display: block; font-weight: 600; color: #2D3748; margin-bottom: 6px; font-size: 14px; }
+  .zoek-rij { display: flex; gap: 10px; }
+  input[type=text], input[type=email], input[type=number] {
+    border: 1.5px solid #E2E8F0; border-radius: 8px; padding: 10px 14px; font-size: 14px;
+    outline: none; color: #2D3748; width: 100%; font-family: inherit;
+  }
+  input:focus { border-color: #3182CE; }
+  .hint { color: #A0AEC0; font-size: 12px; margin-top: 8px; }
+  .fout { color: #E53E3E; font-size: 13px; margin-top: 8px; display: none; }
+  .fout.zichtbaar { display: block; }
+
+  /* Knoppen */
+  .btn-primary { background: #1E3A5F; color: white; border: none; border-radius: 8px; padding: 10px 20px; font-weight: 700; font-size: 14px; cursor: pointer; white-space: nowrap; }
+  .btn-groen { background: #27AE60; color: white; border: none; border-radius: 10px; padding: 14px; font-weight: 800; font-size: 15px; cursor: pointer; width: 100%; }
+  .btn-groen:disabled { background: #A0AEC0; cursor: not-allowed; }
+  .btn-navy { background: #1E3A5F; color: white; border: none; border-radius: 10px; padding: 12px 28px; font-weight: 700; font-size: 14px; cursor: pointer; }
+
+  /* Order info */
+  .order-info { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+  .order-nr-label { font-size: 11px; color: #A0AEC0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+  .order-nr { font-size: 20px; font-weight: 800; color: #1E3A5F; }
+  .order-meta { display: flex; gap: 24px; flex-wrap: wrap; }
+  .order-meta-item span:first-child { font-size: 11px; color: #A0AEC0; font-weight: 600; text-transform: uppercase; display: block; }
+  .order-meta-item span:last-child { font-size: 14px; color: #2D3748; font-weight: 600; }
+  .badge { border-radius: 20px; padding: 3px 12px; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
+  .badge-open { background: #FFFAF0; color: #E67E22; border: 1px solid #E67E22; }
+  .badge-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+
+  /* Tabel */
+  .tabel-wrap { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); border: 1px solid #E2E8F0; margin-bottom: 16px; overflow-x: auto; }
+  .tabel { width: 100%; border-collapse: collapse; min-width: 600px; }
+  .tabel thead tr { background: #1E3A5F; }
+  .tabel thead th { color: white; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; padding: 10px 12px; text-align: left; }
+  .tabel tbody tr:nth-child(even) { background: #F7FAFC; }
+  .tabel tbody tr:nth-child(odd) { background: white; }
+  .tabel tbody td { padding: 10px 12px; border-bottom: 1px solid #EDF2F7; vertical-align: middle; font-size: 13px; color: #2D3748; }
+  .tabel tfoot tr { background: #EBF8FF; border-top: 2px solid #3182CE; }
+  .tabel tfoot td { padding: 10px 12px; font-weight: 800; font-size: 14px; color: #1E3A5F; }
+  .artikel-code { font-family: monospace; font-size: 11px; color: #718096; }
+
+  /* Invoervelden in tabel */
+  .input-geleverd { width: 80px; border: 2px solid #E2E8F0; border-radius: 6px; padding: 6px 8px; font-size: 13px; font-weight: 700; text-align: center; outline: none; }
+  .input-geleverd.ok { border-color: #27AE60; color: #27AE60; background: #F0FFF4; }
+  .input-geleverd.afwijking { border-color: #E67E22; color: #E67E22; background: #FFFAF0; }
+  .afwijking-tekst { font-size: 10px; color: #E67E22; text-align: center; margin-top: 2px; }
+
+  select.magazijn-select { width: 110px; border: 2px solid #E2E8F0; border-radius: 6px; padding: 6px 8px; font-size: 12px; outline: none; cursor: pointer; }
+  select.magazijn-select.ok { border-color: #3182CE; color: #1E3A5F; background: #EBF8FF; font-weight: 700; }
+
+  .input-locatie { width: 110px; border: 2px solid #E2E8F0; border-radius: 6px; padding: 6px 8px; font-size: 12px; outline: none; }
+  .input-locatie.ok { border-color: #3182CE; background: #EBF8FF; font-weight: 600; font-family: monospace; }
+
+  /* Totaalbalk */
+  .totaal-balk { background: #EBF8FF; border: 1px solid #3182CE; border-radius: 10px; padding: 12px 20px; display: flex; gap: 32px; margin-bottom: 16px; }
+  .totaal-item span:first-child { font-size: 11px; color: #718096; font-weight: 600; text-transform: uppercase; display: block; }
+  .totaal-item span:last-child { font-size: 20px; font-weight: 800; }
+
+  /* Foto sectie */
+  .foto-sectie h3 { font-size: 14px; font-weight: 700; color: #1E3A5F; margin-bottom: 4px; }
+  .foto-sectie p { font-size: 13px; color: #718096; margin-bottom: 14px; }
+  .foto-knoppen { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .btn-camera { background: #1E3A5F; color: white; border: none; border-radius: 8px; padding: 10px 18px; font-weight: 700; font-size: 13px; cursor: pointer; }
+  .btn-upload { background: white; color: #1E3A5F; border: 2px solid #1E3A5F; border-radius: 8px; padding: 10px 18px; font-weight: 700; font-size: 13px; cursor: pointer; }
+  .foto-grid { display: flex; gap: 12px; flex-wrap: wrap; }
+  .foto-thumb { position: relative; width: 100px; flex-shrink: 0; }
+  .foto-thumb img { width: 100px; height: 75px; object-fit: cover; border-radius: 8px; border: 2px solid #27AE60; display: block; }
+  .foto-verwijder { position: absolute; top: -8px; right: -8px; width: 22px; height: 22px; border-radius: 50%; background: #E53E3E; color: white; border: none; font-size: 14px; cursor: pointer; font-weight: 700; display: flex; align-items: center; justify-content: center; line-height: 1; }
+  .foto-label { font-size: 10px; color: #A0AEC0; text-align: center; margin-top: 3px; }
+  .foto-leeg { border: 2px dashed #E2E8F0; border-radius: 10px; padding: 24px; text-align: center; color: #A0AEC0; font-size: 13px; }
+  .foto-add { width: 100px; height: 75px; border: 2px dashed #E2E8F0; border-radius: 8px; background: #F7FAFC; color: #A0AEC0; font-size: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; border-style: dashed; }
+
+  /* Foutmelding */
+  .fout-balk { background: #FFF5F5; border: 1px solid #E53E3E; border-radius: 8px; padding: 10px 14px; color: #E53E3E; font-size: 13px; margin-bottom: 12px; display: none; }
+  .fout-balk.zichtbaar { display: block; }
+
+  /* Bevestigd scherm */
+  .bevestigd-center { text-align: center; padding-top: 40px; }
+  .check-cirkel { width: 80px; height: 80px; background: #F0FFF4; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 40px; }
+  .samenvatting-tabel { width: 100%; border-collapse: collapse; }
+  .samenvatting-tabel th { font-size: 11px; font-weight: 700; color: #A0AEC0; text-transform: uppercase; padding: 6px 0; border-bottom: 2px solid #1E3A5F; text-align: left; }
+  .samenvatting-tabel td { padding: 8px 0; border-bottom: 1px solid #EDF2F7; font-size: 13px; }
+  .kleur-ok { color: #27AE60; font-weight: 700; }
+  .kleur-afwijking { color: #E67E22; font-weight: 700; }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .tabel { min-width: 500px; }
+    .zoek-rij { flex-direction: column; }
+    .btn-primary { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo">📦</div>
+    <span class="header-title">Inruim Systeem</span>
+  </div>
+  <button class="btn-terug" id="btnTerug" onclick="gaNaarZoek()">← Nieuw document</button>
+</div>
+
+<!-- SCHERM 1: ZOEKEN -->
+<div class="scherm actief" id="schermZoek">
+  <h1>Inkomende goederen verwerken</h1>
+  <p class="subtitel">Scan of typ het inkoopnummer van de pakbon om te beginnen.</p>
+  <div class="card">
+    <label>Inkoopnummer</label>
+    <div class="zoek-rij">
+      <input type="text" id="invoerNummer" placeholder="Bijv. INK-2024-001" onkeydown="if(event.key==='Enter') zoekOrder()">
+      <button class="btn-primary" onclick="zoekOrder()">Zoeken</button>
+    </div>
+    <div class="fout zichtbaar" id="zoekFout" style="display:none"></div>
+    <p class="hint">💡 Demo: probeer INK-2024-001 of INK-2024-002</p>
+  </div>
+</div>
+
+<!-- SCHERM 2: INVULLEN -->
+<div class="scherm" id="schermInvullen">
+
+  <!-- Order info -->
+  <div class="card">
+    <div class="order-info">
+      <div>
+        <div class="order-nr-label">Inkoopnummer</div>
+        <div class="order-nr" id="toonNummer"></div>
+      </div>
+      <span class="badge badge-open"><span class="badge-dot" style="background:#E67E22"></span>Open</span>
+    </div>
+    <div class="order-meta">
+      <div class="order-meta-item"><span>Leverancier</span><span id="toonLeverancier"></span></div>
+      <div class="order-meta-item"><span>Datum</span><span id="toonDatum"></span></div>
+      <div class="order-meta-item"><span>Artikelen</span><span id="toonAantal"></span></div>
+    </div>
+  </div>
+
+  <!-- Artikeltabel -->
+  <div class="tabel-wrap">
+    <table class="tabel">
+      <thead>
+        <tr>
+          <th>Artikel</th>
+          <th>Omschrijving</th>
+          <th>Eenh.</th>
+          <th>Verwacht</th>
+          <th>Geleverd ✎</th>
+          <th>Magazijn nr.</th>
+          <th>Locatienr. ✎</th>
+        </tr>
+      </thead>
+      <tbody id="regelsTbody"></tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3">TOTAAL</td>
+          <td id="totaalVerwacht">0</td>
+          <td id="totaalGeleverd">—</td>
+          <td></td><td></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <!-- Foto sectie -->
+  <div class="card foto-sectie">
+    <h3>📷 Foto pakbon leverancier</h3>
+    <p>Maak een foto of upload een afbeelding van de pakbon. Deze wordt meegestuurd met de e-mail.</p>
+    <div class="foto-knoppen">
+      <button class="btn-camera" onclick="document.getElementById('cameraInput').click()">📸 Camera</button>
+      <button class="btn-upload" onclick="document.getElementById('fotoInput').click()">🖼️ Uploaden</button>
+      <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="verwerkFotos(this.files)">
+      <input type="file" id="fotoInput" accept="image/*" multiple style="display:none" onchange="verwerkFotos(this.files)">
+    </div>
+    <div class="foto-grid" id="fotoGrid">
+      <div class="foto-leeg" id="fotoLeeg">Nog geen foto toegevoegd — verplicht voor verzending</div>
+    </div>
+  </div>
+
+  <!-- Opmerking + Email -->
+  <div class="card">
+    <div style="margin-bottom:16px">
+      <label>Opmerking (optioneel)</label>
+      <textarea id="opmerking" rows="2" placeholder="Bijv. doos beschadigd, deellevering..." style="width:100%;border:1.5px solid #E2E8F0;border-radius:8px;padding:9px 12px;font-size:13px;resize:vertical;outline:none;color:#2D3748;font-family:inherit"></textarea>
+    </div>
+    <div>
+      <label>📧 E-mailadres voor melding</label>
+      <input type="email" id="emailAdres" placeholder="naam@bedrijf.nl">
+    </div>
+  </div>
+
+  <div class="fout-balk" id="invulFout"></div>
+
+  <button class="btn-groen" id="btnBevestig" onclick="bevestig()">✅ Bevestigen &amp; Melding versturen</button>
+</div>
+
+<!-- SCHERM 3: BEVESTIGD -->
+<div class="scherm" id="schermBevestigd">
+  <div class="bevestigd-center">
+    <div class="check-cirkel">✅</div>
+    <h2 style="color:#1E3A5F;font-size:22px;font-weight:800;margin-bottom:8px">Ontvangst bevestigd!</h2>
+    <p style="color:#718096;font-size:15px;margin-bottom:28px" id="bevestigTekst"></p>
+
+    <div id="fotoBevestigd" style="display:flex;justify-content:center;gap:10px;margin-bottom:24px;flex-wrap:wrap"></div>
+
+    <div class="card" style="text-align:left">
+      <div style="font-weight:700;color:#1E3A5F;margin-bottom:12px;font-size:14px">Samenvatting</div>
+      <table class="samenvatting-tabel">
+        <thead>
+          <tr>
+            <th>Artikel</th>
+            <th style="text-align:center">Verwacht</th>
+            <th style="text-align:center">Geleverd</th>
+            <th>Magazijn</th>
+            <th>Locatie</th>
+          </tr>
+        </thead>
+        <tbody id="samenvattingBody"></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="5" style="padding-top:10px;font-weight:800;color:#1E3A5F;font-size:14px" id="totaalRegel"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <button class="btn-navy" onclick="gaNaarZoek()">Nieuw inruimdocument verwerken</button>
+  </div>
+</div>
+
+<script>
+// =====================
+// DATABASE (DEMO)
+// =====================
+const db = {
+  "INK-2024-001": {
+    leverancier: "Janssen Groothandel BV", datum: "16-04-2026",
+    regels: [
+      { artikel: "ART-001", omschrijving: "Schroeven M6x30 RVS", eenheid: "doos", verwacht: 50 },
+      { artikel: "ART-002", omschrijving: "Bouten M8x50 verzinkt", eenheid: "doos", verwacht: 25 },
+      { artikel: "ART-003", omschrijving: "Moeren M6 RVS", eenheid: "zak", verwacht: 100 },
+    ]
+  },
+  "INK-2024-002": {
+    leverancier: "De Vries Materialen", datum: "16-04-2026",
+    regels: [
+      { artikel: "ART-010", omschrijving: "PVC Buis 50mm 3m", eenheid: "stuk", verwacht: 20 },
+      { artikel: "ART-011", omschrijving: "Knie 90° 50mm", eenheid: "stuk", verwacht: 40 },
+    ]
+  }
+};
+
+let huidigOrder = null;
+let regels = [];
+let fotos = [];
+
+// =====================
+// SCHERM WISSELEN
+// =====================
+function toonScherm(id) {
+  document.querySelectorAll('.scherm').forEach(s => s.classList.remove('actief'));
+  document.getElementById(id).classList.add('actief');
+  document.getElementById('btnTerug').style.display = id === 'schermZoek' ? 'none' : 'block';
+}
+
+function gaNaarZoek() {
+  huidigOrder = null; regels = []; fotos = [];
+  document.getElementById('invoerNummer').value = '';
+  document.getElementById('emailAdres').value = '';
+  document.getElementById('opmerking').value = '';
+  document.getElementById('zoekFout').style.display = 'none';
+  toonScherm('schermZoek');
+}
+
+// =====================
+// ZOEKEN
+// =====================
+function zoekOrder() {
+  const num = document.getElementById('invoerNummer').value.trim().toUpperCase();
+  const fout = document.getElementById('zoekFout');
+  if (!num) { fout.textContent = '⚠ Voer een inkoopnummer in.'; fout.style.display = 'block'; return; }
+  const gevonden = db[num];
+  if (!gevonden) { fout.textContent = '⚠ Inkoopnummer niet gevonden. Controleer het nummer op de pakbon.'; fout.style.display = 'block'; return; }
+  fout.style.display = 'none';
+  huidigOrder = { ...gevonden, nummer: num };
+  regels = gevonden.regels.map(r => ({ ...r, geleverd: '', magazijn: '', locatie: '' }));
+  fotos = [];
+  bouwInvulScherm();
+  toonScherm('schermInvullen');
+}
+
+// =====================
+// INVULSCHERM BOUWEN
+// =====================
+function bouwInvulScherm() {
+  document.getElementById('toonNummer').textContent = huidigOrder.nummer;
+  document.getElementById('toonLeverancier').textContent = huidigOrder.leverancier;
+  document.getElementById('toonDatum').textContent = huidigOrder.datum;
+  document.getElementById('toonAantal').textContent = regels.length + ' artikelen';
+
+  const tbody = document.getElementById('regelsTbody');
+  tbody.innerHTML = '';
+  regels.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="artikel-code">${r.artikel}</span></td>
+      <td>${r.omschrijving}</td>
+      <td style="color:#718096">${r.eenheid}</td>
+      <td style="font-weight:800;color:#1E3A5F;text-align:center">${r.verwacht}</td>
+      <td>
+        <input type="number" min="0" class="input-geleverd" id="gel_${i}" placeholder="0" oninput="updateGeleverd(${i})">
+        <div class="afwijking-tekst" id="afw_${i}" style="display:none">⚠ afwijking</div>
+      </td>
+      <td>
+        <select class="magazijn-select" id="mag_${i}" onchange="updateMagazijn(${i})">
+          <option value="">— kies —</option>
+          <option value="1">Magazijn 1</option>
+          <option value="2">Magazijn 2</option>
+          <option value="3">Magazijn 3</option>
+          <option value="4">Magazijn 4</option>
+          <option value="5">Magazijn 5</option>
+        </select>
+      </td>
+      <td>
+        <input type="text" class="input-locatie" id="loc_${i}" placeholder="Bijv. A-01-03" oninput="updateLocatie(${i})">
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  updateTotalen();
+  bouwFotoGrid();
+}
+
+function updateGeleverd(i) {
+  const val = document.getElementById('gel_' + i).value;
+  regels[i].geleverd = val;
+  const el = document.getElementById('gel_' + i);
+  const afw = document.getElementById('afw_' + i);
+  const afwijking = val !== '' && Number(val) !== regels[i].verwacht;
+  el.className = 'input-geleverd' + (val !== '' ? (afwijking ? ' afwijking' : ' ok') : '');
+  afw.style.display = afwijking ? 'block' : 'none';
+  updateTotalen();
+}
+
+function updateMagazijn(i) {
+  const val = document.getElementById('mag_' + i).value;
+  regels[i].magazijn = val;
+  const el = document.getElementById('mag_' + i);
+  el.className = 'magazijn-select' + (val ? ' ok' : '');
+}
+
+function updateLocatie(i) {
+  const val = document.getElementById('loc_' + i).value;
+  regels[i].locatie = val;
+  const el = document.getElementById('loc_' + i);
+  el.className = 'input-locatie' + (val ? ' ok' : '');
+}
+
+function updateTotalen() {
+  const tv = regels.reduce((s, r) => s + r.verwacht, 0);
+  const tg = regels.reduce((s, r) => s + (Number(r.geleverd) || 0), 0);
+  const heeftGeleverd = regels.some(r => r.geleverd !== '');
+  document.getElementById('totaalVerwacht').textContent = tv;
+  document.getElementById('totaalGeleverd').textContent = heeftGeleverd ? tg : '—';
+  document.getElementById('totaalGeleverd').style.color = heeftGeleverd && tg !== tv ? '#E67E22' : '#27AE60';
+}
+
+// =====================
+// FOTOS
+// =====================
+function verwerkFotos(files) {
+  Array.from(files).forEach(file => {
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = e => { fotos.push({ name: file.name, dataUrl: e.target.result }); bouwFotoGrid(); };
+    reader.readAsDataURL(file);
+  });
+}
+
+function verwijderFoto(i) {
+  fotos.splice(i, 1);
+  bouwFotoGrid();
+}
+
+function bouwFotoGrid() {
+  const grid = document.getElementById('fotoGrid');
+  const leeg = document.getElementById('fotoLeeg');
+  grid.innerHTML = '';
+  if (fotos.length === 0) {
+    grid.appendChild(leeg || (() => { const d = document.createElement('div'); d.className = 'foto-leeg'; d.id = 'fotoLeeg'; d.textContent = 'Nog geen foto toegevoegd — verplicht voor verzending'; return d; })());
+    return;
+  }
+  fotos.forEach((foto, i) => {
+    const div = document.createElement('div');
+    div.className = 'foto-thumb';
+    div.innerHTML = `<img src="${foto.dataUrl}" alt="Pakbon ${i+1}"><button class="foto-verwijder" onclick="verwijderFoto(${i})">×</button><div class="foto-label">Foto ${i+1}</div>`;
+    grid.appendChild(div);
+  });
+  const add = document.createElement('button');
+  add.className = 'foto-add';
+  add.textContent = '+';
+  add.onclick = () => document.getElementById('fotoInput').click();
+  grid.appendChild(add);
+}
+
+// =====================
+// BEVESTIGEN
+// =====================
+async function bevestig() {
+  const fout = document.getElementById('invulFout');
+  const email = document.getElementById('emailAdres').value.trim();
+
+  if (!email) { fout.textContent = '⚠ Voer het e-mailadres in zodat de melding verstuurd kan worden.'; fout.classList.add('zichtbaar'); return; }
+  for (let r of regels) {
+    if (r.geleverd === '') { fout.textContent = '⚠ Vul bij alle regels het geleverde aantal in (ook als dit 0 is).'; fout.classList.add('zichtbaar'); return; }
+    if (!r.magazijn) { fout.textContent = '⚠ Selecteer bij alle regels een magazijn.'; fout.classList.add('zichtbaar'); return; }
+    if (!r.locatie.trim()) { fout.textContent = '⚠ Vul bij alle regels een locatienummer in.'; fout.classList.add('zichtbaar'); return; }
+  }
+  if (fotos.length === 0) { fout.textContent = '⚠ Voeg minimaal één foto van de pakbon toe.'; fout.classList.add('zichtbaar'); return; }
+
+  fout.classList.remove('zichtbaar');
+  const btn = document.getElementById('btnBevestig');
+  btn.textContent = '⏳ Bezig met versturen...';
+  btn.disabled = true;
+
+  // Hier komt later de Power Automate koppeling
+  await new Promise(r => setTimeout(r, 1500));
+
+  btn.textContent = '✅ Bevestigen & Melding versturen';
+  btn.disabled = false;
+
+  bouwBevestigdScherm(email);
+  toonScherm('schermBevestigd');
+}
+
+function bouwBevestigdScherm(email) {
+  const tv = regels.reduce((s, r) => s + r.verwacht, 0);
+  const tg = regels.reduce((s, r) => s + (Number(r.geleverd) || 0), 0);
+
+  document.getElementById('bevestigTekst').innerHTML =
+    `Inkoopnummer <strong>${huidigOrder.nummer}</strong> is verwerkt.<br>Er is een melding met <strong>${fotos.length} foto${fotos.length !== 1 ? "'s" : ""}</strong> verstuurd naar <strong>${email}</strong>.`;
+
+  const fotoDiv = document.getElementById('fotoBevestigd');
+  fotoDiv.innerHTML = '';
+  fotos.forEach((f, i) => {
+    const img = document.createElement('img');
+    img.src = f.dataUrl;
+    img.style.cssText = 'width:80px;height:60px;object-fit:cover;border-radius:6px;border:2px solid #27AE60';
+    fotoDiv.appendChild(img);
+  });
+
+  const tbody = document.getElementById('samenvattingBody');
+  tbody.innerHTML = '';
+  regels.forEach(r => {
+    const afwijking = Number(r.geleverd) !== r.verwacht;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><div style="font-weight:600">${r.omschrijving}</div><div style="font-size:11px;color:#A0AEC0;font-family:monospace">${r.artikel}</div></td>
+      <td style="text-align:center;color:#1E3A5F;font-weight:600">${r.verwacht}</td>
+      <td style="text-align:center" class="${afwijking ? 'kleur-afwijking' : 'kleur-ok'}">${r.geleverd}${afwijking ? ' ⚠' : ''}</td>
+      <td>Magazijn ${r.magazijn}</td>
+      <td style="font-family:monospace;font-size:12px">${r.locatie}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('totaalRegel').textContent = `Totaal geleverd: ${tg} / ${tv}`;
+}
+</script>
+</body>
+</html>
