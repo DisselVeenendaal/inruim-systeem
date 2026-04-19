@@ -559,11 +559,13 @@ ${heeftAfwijking ? '<p style="color:#E67E22;font-weight:bold;margin-top:12px;">â
         opmerking: document.getElementById('opmerking').value,
         medewerker: huidigeMedewerker,
         regels: regelsTekst,
-        fotos: fotos.map((f, i) => ({
-          naam: f.name || `pakbon-foto-${i+1}.jpg`,
-          inhoud: f.dataUrl.split(',')[1],
-          type: f.dataUrl.split(';')[0].split(':')[1]
-        }))
+        fotos: fotos.map((f, i) => {
+          const mimeType = f.dataUrl.split(';')[0].split(':')[1];
+          const ext = mimeType === 'image/png' ? 'png' : 'jpg';
+          const naam = 'pakbon-' + huidigOrder.nummer + '-foto' + (i+1) + '.' + ext;
+          const inhoud = f.dataUrl.split(',')[1];
+          return { naam, inhoud };
+        })
       })
     });
   } catch(e) {
