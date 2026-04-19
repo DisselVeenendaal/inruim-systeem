@@ -171,7 +171,6 @@
       <button class="btn-primary" onclick="zoekOrder()">Zoeken</button>
     </div>
     <div class="fout zichtbaar" id="zoekFout" style="display:none"></div>
-    <p class="hint">💡 Demo: probeer INK-2024-001 of INK-2024-002</p>
   </div>
 </div>
 
@@ -201,7 +200,6 @@
         <tr>
           <th>Artikel</th>
           <th>Omschrijving</th>
-          <th>Eenh.</th>
           <th>Verwacht</th>
           <th>Geleverd ✎</th>
           <th>Magazijn nr.</th>
@@ -288,25 +286,9 @@
 
 <script>
 // =====================
-// DATABASE (DEMO)
+// POWER AUTOMATE FLOW URL
 // =====================
-const db = {
-  "INK-2024-001": {
-    leverancier: "Janssen Groothandel BV", datum: "16-04-2026",
-    regels: [
-      { artikel: "ART-001", omschrijving: "Schroeven M6x30 RVS", eenheid: "doos", verwacht: 50 },
-      { artikel: "ART-002", omschrijving: "Bouten M8x50 verzinkt", eenheid: "doos", verwacht: 25 },
-      { artikel: "ART-003", omschrijving: "Moeren M6 RVS", eenheid: "zak", verwacht: 100 },
-    ]
-  },
-  "INK-2024-002": {
-    leverancier: "De Vries Materialen", datum: "16-04-2026",
-    regels: [
-      { artikel: "ART-010", omschrijving: "PVC Buis 50mm 3m", eenheid: "stuk", verwacht: 20 },
-      { artikel: "ART-011", omschrijving: "Knie 90° 50mm", eenheid: "stuk", verwacht: 40 },
-    ]
-  }
-};
+const ZOEK_FLOW_URL = 'https://default44fd0f2e682f48b1b0a49033071749.17.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/e14c5810353b4698b27eadd3ae06a205/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=';
 
 let huidigOrder = null;
 let regels = [];
@@ -357,18 +339,64 @@ function gaNaarZoek() {
 // =====================
 // ZOEKEN
 // =====================
-function zoekOrder() {
+async function zoekOrder() {
   const num = document.getElementById('invoerNummer').value.trim().toUpperCase();
   const fout = document.getElementById('zoekFout');
+  const btn = document.querySelector('#schermZoek .btn-primary');
   if (!num) { fout.textContent = '⚠ Voer een inkoopnummer in.'; fout.style.display = 'block'; return; }
-  const gevonden = db[num];
-  if (!gevonden) { fout.textContent = '⚠ Inkoopnummer niet gevonden. Controleer het nummer op de pakbon.'; fout.style.display = 'block'; return; }
+  
   fout.style.display = 'none';
-  huidigOrder = { ...gevonden, nummer: num };
-  regels = gevonden.regels.map(r => ({ ...r, geleverd: '', magazijn: '', locatie: '' }));
-  fotos = [];
-  bouwInvulScherm();
-  toonScherm('schermInvullen');
+  btn.textContent = '⏳ Zoeken...';
+  btn.disabled = true;
+
+  try {
+    const response = await fetch(ZOEK_FLOW_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ inkoopnummer: num })
+    });
+
+    if (!response.ok) throw new Error('Flow fout');
+    const data = await response.json();
+
+    if (!data || data.length === 0) {
+      fout.textContent = '⚠ Inkoopnummer niet gevonden. Controleer het nummer op de pakbon.';
+      fout.style.display = 'block';
+      btn.textContent = 'Zoeken';
+      btn.disabled = false;
+      return;
+    }
+
+    // Eerste rij voor order info
+    const eersteRij = data[0];
+    huidigOrder = {
+      nummer: num,
+      leverancier: eersteRij['Leverancier'],
+      verkoopnummer: eersteRij['Verkoopnummer'] || '',
+      klantreferentie: eersteRij['Klantreferentie'] || '',
+      afleveradres: eersteRij['Afleveradres'] || ''
+    };
+
+    regels = data.map(r => ({
+      artikel: r['Artikelcode'],
+      omschrijving: r['Omschrijving'],
+      verwacht: Number(r['Verwacht']),
+      geleverd: '',
+      magazijn: '',
+      locatie: ''
+    }));
+
+    fotos = [];
+    bouwInvulScherm();
+    toonScherm('schermInvullen');
+
+  } catch(e) {
+    fout.textContent = '⚠ Verbindingsfout. Probeer het opnieuw.';
+    fout.style.display = 'block';
+  }
+
+  btn.textContent = 'Zoeken';
+  btn.disabled = false;
 }
 
 // =====================
@@ -377,7 +405,7 @@ function zoekOrder() {
 function bouwInvulScherm() {
   document.getElementById('toonNummer').textContent = huidigOrder.nummer;
   document.getElementById('toonLeverancier').textContent = huidigOrder.leverancier;
-  document.getElementById('toonDatum').textContent = huidigOrder.datum;
+  document.getElementById('toonDatum').textContent = new Date().toLocaleDateString('nl-NL');
   document.getElementById('toonAantal').textContent = regels.length + ' artikelen';
 
   const tbody = document.getElementById('regelsTbody');
@@ -387,7 +415,6 @@ function bouwInvulScherm() {
     tr.innerHTML = `
       <td><span class="artikel-code">${r.artikel}</span></td>
       <td>${r.omschrijving}</td>
-      <td style="color:#718096">${r.eenheid}</td>
       <td style="font-weight:800;color:#1E3A5F;text-align:center">${r.verwacht}</td>
       <td>
         <input type="number" min="0" class="input-geleverd" id="gel_${i}" placeholder="0" oninput="updateGeleverd(${i})">
@@ -549,7 +576,7 @@ async function bevestig() {
   </tbody>
   <tfoot>
     <tr style="background:#EBF8FF;font-weight:bold;">
-      <td colspan="2" style="color:#1E3A5F;">TOTAAL</td>
+      <td colspan="3" style="color:#1E3A5F;">TOTAAL</td>
       <td style="text-align:center;color:#1E3A5F;">${regels.reduce((s,r)=>s+r.verwacht,0)}</td>
       <td style="text-align:center;color:${heeftAfwijking?'#E67E22':'#27AE60'};">${regels.reduce((s,r)=>s+(Number(r.geleverd)||0),0)}</td>
       <td colspan="2"></td>
