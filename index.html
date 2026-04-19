@@ -528,7 +528,6 @@ async function bevestig() {
     <tr style="background:#1E3A5F;color:white;">
       <th style="text-align:left;">Artikel</th>
       <th style="text-align:left;">Omschrijving</th>
-      <th style="text-align:center;">Eenh.</th>
       <th style="text-align:center;">Verwacht</th>
       <th style="text-align:center;">Geleverd</th>
       <th style="text-align:left;">Magazijn</th>
@@ -541,7 +540,6 @@ async function bevestig() {
       return `<tr style="background:${afwijking ? '#FFF8F0' : 'white'};">
         <td style="font-family:monospace;color:#555;">${r.artikel}</td>
         <td>${r.omschrijving}</td>
-        <td style="text-align:center;color:#555;">${r.eenheid}</td>
         <td style="text-align:center;font-weight:bold;">${r.verwacht}</td>
         <td style="text-align:center;font-weight:bold;color:${afwijking ? '#E67E22' : '#27AE60'};">${r.geleverd}${afwijking ? ' ⚠' : ' ✓'}</td>
         <td>Magazijn ${r.magazijn}</td>
@@ -551,7 +549,7 @@ async function bevestig() {
   </tbody>
   <tfoot>
     <tr style="background:#EBF8FF;font-weight:bold;">
-      <td colspan="3" style="color:#1E3A5F;">TOTAAL</td>
+      <td colspan="2" style="color:#1E3A5F;">TOTAAL</td>
       <td style="text-align:center;color:#1E3A5F;">${regels.reduce((s,r)=>s+r.verwacht,0)}</td>
       <td style="text-align:center;color:${heeftAfwijking?'#E67E22':'#27AE60'};">${regels.reduce((s,r)=>s+(Number(r.geleverd)||0),0)}</td>
       <td colspan="2"></td>
