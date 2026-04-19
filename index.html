@@ -455,7 +455,21 @@ function verwerkFotos(files) {
   Array.from(files).forEach(file => {
     if (!file.type.startsWith('image/')) return;
     const reader = new FileReader();
-    reader.onload = e => { fotos.push({ name: file.name, dataUrl: e.target.result }); bouwFotoGrid(); };
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxBreedte = 1200;
+        const schaal = img.width > maxBreedte ? maxBreedte / img.width : 1;
+        canvas.width = img.width * schaal;
+        canvas.height = img.height * schaal;
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        const gecomprimeerd = canvas.toDataURL('image/jpeg', 0.7);
+        fotos.push({ name: file.name, dataUrl: gecomprimeerd });
+        bouwFotoGrid();
+      };
+      img.src = e.target.result;
+    };
     reader.readAsDataURL(file);
   });
 }
