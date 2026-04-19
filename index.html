@@ -107,6 +107,18 @@
   .kleur-ok { color: #27AE60; font-weight: 700; }
   .kleur-afwijking { color: #E67E22; font-weight: 700; }
 
+  /* Login scherm */
+  .login-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: calc(100vh - 60px); padding: 24px 16px; }
+  .login-card { background: white; border-radius: 16px; padding: 36px 28px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); border: 1px solid #E2E8F0; width: 100%; max-width: 400px; text-align: center; }
+  .login-logo { width: 64px; height: 64px; background: #EBF8FF; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 20px; }
+  .login-titel { color: #1E3A5F; font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+  .login-subtitel { color: #718096; font-size: 14px; margin-bottom: 28px; }
+  .medewerker-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
+  .btn-medewerker { background: #F7FAFC; border: 2px solid #E2E8F0; border-radius: 10px; padding: 14px 10px; font-size: 14px; font-weight: 700; color: #2D3748; cursor: pointer; transition: all 0.15s; }
+  .btn-medewerker:hover { border-color: #3182CE; background: #EBF8FF; color: #1E3A5F; }
+  .btn-medewerker.geselecteerd { border-color: #1E3A5F; background: #1E3A5F; color: white; }
+  .header-medewerker { color: rgba(255,255,255,0.8); font-size: 13px; margin-left: auto; }
+
   /* Responsive */
   @media (max-width: 600px) {
     .tabel { min-width: 500px; }
@@ -122,11 +134,34 @@
     <div class="header-logo">📦</div>
     <span class="header-title">Inruim Systeem</span>
   </div>
-  <button class="btn-terug" id="btnTerug" onclick="gaNaarZoek()">← Nieuw document</button>
+  <div style="display:flex;align-items:center;gap:12px">
+    <span class="header-medewerker" id="headerMedewerker"></span>
+    <button class="btn-terug" id="btnTerug" onclick="gaNaarZoek()">← Nieuw document</button>
+    <button class="btn-terug" id="btnUitloggen" style="display:none" onclick="uitloggen()">Uitloggen</button>
+  </div>
+</div>
+
+<!-- SCHERM 0: INLOGGEN -->
+<div class="login-wrap actief" id="schermLogin">
+  <div class="login-card">
+    <div class="login-logo">👷</div>
+    <div class="login-titel">Inruim Systeem</div>
+    <div class="login-subtitel">Wie ben jij? Kies je naam om te beginnen.</div>
+    <div class="medewerker-grid">
+      <button class="btn-medewerker" onclick="kiesMediawerker('Henri')">Henri</button>
+      <button class="btn-medewerker" onclick="kiesMediawerker('Jeroen')">Jeroen</button>
+      <button class="btn-medewerker" onclick="kiesMediawerker('Cees')">Cees</button>
+      <button class="btn-medewerker" onclick="kiesMediawerker('Wim')">Wim</button>
+      <button class="btn-medewerker" onclick="kiesMediawerker('Willem')">Willem</button>
+      <button class="btn-medewerker" onclick="kiesMediawerker('Wouter')">Wouter</button>
+      <button class="btn-medewerker" onclick="kiesMediawerker('Arjen')">Arjen</button>
+      <button class="btn-medewerker" onclick="kiesMediawerker('Jan-Jaap')">Jan-Jaap</button>
+    </div>
+  </div>
 </div>
 
 <!-- SCHERM 1: ZOEKEN -->
-<div class="scherm actief" id="schermZoek">
+<div class="scherm" id="schermZoek">
   <h1>Inkomende goederen verwerken</h1>
   <p class="subtitel">Scan of typ het inkoopnummer van de pakbon om te beginnen.</p>
   <div class="card">
@@ -276,11 +311,35 @@ const db = {
 let huidigOrder = null;
 let regels = [];
 let fotos = [];
+let huidigeMedewerker = '';
+
+// =====================
+// INLOGGEN
+// =====================
+function kiesMediawerker(naam) {
+  huidigeMedewerker = naam;
+  document.getElementById('headerMedewerker').textContent = '👷 ' + naam;
+  document.getElementById('btnUitloggen').style.display = 'block';
+  // Verberg login scherm
+  document.getElementById('schermLogin').style.display = 'none';
+  toonScherm('schermZoek');
+}
+
+function uitloggen() {
+  huidigeMedewerker = '';
+  huidigOrder = null; regels = []; fotos = [];
+  document.getElementById('headerMedewerker').textContent = '';
+  document.getElementById('btnUitloggen').style.display = 'none';
+  document.getElementById('btnTerug').style.display = 'none';
+  document.querySelectorAll('.scherm').forEach(s => s.classList.remove('actief'));
+  document.getElementById('schermLogin').style.display = 'flex';
+}
 
 // =====================
 // SCHERM WISSELEN
 // =====================
 function toonScherm(id) {
+  document.getElementById('schermLogin').style.display = 'none';
   document.querySelectorAll('.scherm').forEach(s => s.classList.remove('actief'));
   document.getElementById(id).classList.add('actief');
   document.getElementById('btnTerug').style.display = id === 'schermZoek' ? 'none' : 'block';
@@ -438,7 +497,7 @@ async function bevestig() {
   for (let r of regels) {
     if (r.geleverd === '') { fout.textContent = '⚠ Vul bij alle regels het geleverde aantal in (ook als dit 0 is).'; fout.classList.add('zichtbaar'); return; }
     if (!r.magazijn) { fout.textContent = '⚠ Selecteer bij alle regels een magazijn.'; fout.classList.add('zichtbaar'); return; }
-    if (!r.locatie.trim()) { fout.textContent = '⚠ Vul bij alle regels een locatienummer in.'; fout.classList.add('zichtbaar'); return; }
+
   }
   if (fotos.length === 0) { fout.textContent = '⚠ Voeg minimaal één foto van de pakbon toe.'; fout.classList.add('zichtbaar'); return; }
 
@@ -447,10 +506,47 @@ async function bevestig() {
   btn.textContent = '⏳ Bezig met versturen...';
   btn.disabled = true;
 
-  // Power Automate koppeling
-  const regelsTekst = regels.map(r =>
-    `${r.artikel} - ${r.omschrijving}: ${r.geleverd} ${r.eenheid} geleverd (verwacht: ${r.verwacht}), Magazijn ${r.magazijn}, Locatie ${r.locatie}`
-  ).join('\n');
+  // Power Automate koppeling — HTML tabel voor e-mail
+  const heeftAfwijking = regels.some(r => Number(r.geleverd) !== r.verwacht);
+  const regelsTekst = `
+<table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:13px;">
+  <thead>
+    <tr style="background:#1E3A5F;color:white;">
+      <th style="text-align:left;">Artikel</th>
+      <th style="text-align:left;">Omschrijving</th>
+      <th style="text-align:center;">Eenh.</th>
+      <th style="text-align:center;">Verwacht</th>
+      <th style="text-align:center;">Geleverd</th>
+      <th style="text-align:left;">Magazijn</th>
+      <th style="text-align:left;">Locatie</th>
+    </tr>
+  </thead>
+  <tbody>
+    ${regels.map(r => {
+      const afwijking = Number(r.geleverd) !== r.verwacht;
+      return `<tr style="background:${afwijking ? '#FFF8F0' : 'white'};">
+        <td style="font-family:monospace;color:#555;">${r.artikel}</td>
+        <td>${r.omschrijving}</td>
+        <td style="text-align:center;color:#555;">${r.eenheid}</td>
+        <td style="text-align:center;font-weight:bold;">${r.verwacht}</td>
+        <td style="text-align:center;font-weight:bold;color:${afwijking ? '#E67E22' : '#27AE60'};">${r.geleverd}${afwijking ? ' ⚠' : ' ✓'}</td>
+        <td>Magazijn ${r.magazijn}</td>
+        <td style="font-family:monospace;">${r.locatie}</td>
+      </tr>`;
+    }).join('')}
+  </tbody>
+  <tfoot>
+    <tr style="background:#EBF8FF;font-weight:bold;">
+      <td colspan="3" style="color:#1E3A5F;">TOTAAL</td>
+      <td style="text-align:center;color:#1E3A5F;">${regels.reduce((s,r)=>s+r.verwacht,0)}</td>
+      <td style="text-align:center;color:${heeftAfwijking?'#E67E22':'#27AE60'};">${regels.reduce((s,r)=>s+(Number(r.geleverd)||0),0)}</td>
+      <td colspan="2"></td>
+    </tr>
+  </tfoot>
+</table>
+${heeftAfwijking ? '<p style="color:#E67E22;font-weight:bold;margin-top:12px;">⚠ Let op: er zijn afwijkingen tussen verwacht en geleverd aantal.</p>' : ''}
+<p style="margin-top:16px;color:#718096;font-size:12px;">✅ Gecontroleerd en ingeruimd door: <strong>${huidigeMedewerker}</strong></p>
+`;
 
   try {
     await fetch('https://default44fd0f2e682f48b1b0a49033071749.17.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/afaa75214d7443659dc1bfda44adad23/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=cbU4rJgJ-5oUQnCTrxCcF8goAKWmPE7f99RLBuoSBCc', {
@@ -461,7 +557,13 @@ async function bevestig() {
         leverancier: huidigOrder.leverancier,
         email: email,
         opmerking: document.getElementById('opmerking').value,
-        regels: regelsTekst
+        medewerker: huidigeMedewerker,
+        regels: regelsTekst,
+        fotos: fotos.map((f, i) => ({
+          naam: f.name || `pakbon-foto-${i+1}.jpg`,
+          inhoud: f.dataUrl.split(',')[1],
+          type: f.dataUrl.split(';')[0].split(':')[1]
+        }))
       })
     });
   } catch(e) {
@@ -480,7 +582,7 @@ function bouwBevestigdScherm(email) {
   const tg = regels.reduce((s, r) => s + (Number(r.geleverd) || 0), 0);
 
   document.getElementById('bevestigTekst').innerHTML =
-    `Inkoopnummer <strong>${huidigOrder.nummer}</strong> is verwerkt.<br>Er is een melding met <strong>${fotos.length} foto${fotos.length !== 1 ? "'s" : ""}</strong> verstuurd naar <strong>${email}</strong>.`;
+    `Inkoopnummer <strong>${huidigOrder.nummer}</strong> is verwerkt door <strong>${huidigeMedewerker}</strong>.<br>Er is een melding met <strong>${fotos.length} foto${fotos.length !== 1 ? "'s" : ""}</strong> verstuurd naar <strong>${email}</strong>.`;
 
   const fotoDiv = document.getElementById('fotoBevestigd');
   fotoDiv.innerHTML = '';
