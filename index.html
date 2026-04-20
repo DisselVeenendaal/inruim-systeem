@@ -221,7 +221,7 @@
   <!-- Foto sectie -->
   <div class="card foto-sectie">
     <h3>📷 Foto pakbon leverancier</h3>
-    <p>Maak een foto of upload een afbeelding van de pakbon. Deze wordt meegestuurd met de e-mail.</p>
+    <p>Maak 2 fotos of upload 2 afbeeldingen van de pakbon. Deze worden meegestuurd met de e-mail.</p>
     <div class="foto-knoppen">
       <button class="btn-camera" onclick="document.getElementById('cameraInput').click()">📸 Camera</button>
       <button class="btn-upload" onclick="document.getElementById('fotoInput').click()">🖼️ Uploaden</button>
@@ -229,7 +229,7 @@
       <input type="file" id="fotoInput" accept="image/*" multiple style="display:none" onchange="verwerkFotos(this.files)">
     </div>
     <div class="foto-grid" id="fotoGrid">
-      <div class="foto-leeg" id="fotoLeeg">Nog geen foto toegevoegd — verplicht voor verzending</div>
+      <div class="foto-leeg" id="fotoLeeg">Voeg 2 fotos toe van de pakbon (verplicht)</div>
     </div>
   </div>
 
@@ -511,7 +511,7 @@ function bouwFotoGrid() {
   const leeg = document.getElementById('fotoLeeg');
   grid.innerHTML = '';
   if (fotos.length === 0) {
-    grid.appendChild(leeg || (() => { const d = document.createElement('div'); d.className = 'foto-leeg'; d.id = 'fotoLeeg'; d.textContent = 'Nog geen foto toegevoegd — verplicht voor verzending'; return d; })());
+    grid.appendChild(leeg || (() => { const d = document.createElement('div'); d.className = 'foto-leeg'; d.id = 'fotoLeeg'; d.textContent = 'Voeg 2 fotos toe van de pakbon (verplicht)'; return d; })());
     return;
   }
   fotos.forEach((foto, i) => {
@@ -520,11 +520,13 @@ function bouwFotoGrid() {
     div.innerHTML = `<img src="${foto.dataUrl}" alt="Pakbon ${i+1}"><button class="foto-verwijder" onclick="verwijderFoto(${i})">×</button><div class="foto-label">Foto ${i+1}</div>`;
     grid.appendChild(div);
   });
+  if (fotos.length < 2) {
   const add = document.createElement('button');
   add.className = 'foto-add';
   add.textContent = '+';
   add.onclick = () => document.getElementById('fotoInput').click();
   grid.appendChild(add);
+  }
 }
 
 // =====================
@@ -540,7 +542,7 @@ async function bevestig() {
     if (!r.magazijn) { fout.textContent = '⚠ Selecteer bij alle regels een magazijn.'; fout.classList.add('zichtbaar'); return; }
 
   }
-  if (fotos.length === 0) { fout.textContent = '⚠ Voeg minimaal één foto van de pakbon toe.'; fout.classList.add('zichtbaar'); return; }
+  if (fotos.length < 2) { fout.textContent = '⚠ Voeg precies 2 fotos van de pakbon toe.'; fout.classList.add('zichtbaar'); return; }
 
   fout.classList.remove('zichtbaar');
   const btn = document.getElementById('btnBevestig');
