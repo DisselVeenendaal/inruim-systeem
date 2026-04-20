@@ -126,6 +126,7 @@
     .btn-primary { width: 100%; }
   }
 </style>
+<script src="http://127.0.0.1:9100/BrowserPrint-3.0.216.min.js"></script>
 </head>
 <body>
 
@@ -217,6 +218,20 @@
         </tr>
       </tfoot>
     </table>
+  </div>
+
+  <!-- Label printen -->
+  <div class="card">
+    <h3 style="font-size:14px;font-weight:700;color:#1E3A5F;margin-bottom:4px">🖨️ Etiket printen</h3>
+    <p style="font-size:13px;color:#718096;margin-bottom:14px">Print een etiket met verkoopnummer, referentie en adres.</p>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <div>
+        <label style="font-size:13px">Aantal etiketten</label>
+        <input type="number" id="aantalEtiketten" min="1" max="99" value="1" style="width:80px;border:1.5px solid #E2E8F0;border-radius:8px;padding:8px 10px;font-size:14px;font-weight:700;text-align:center;outline:none;">
+      </div>
+      <button class="btn-navy" style="margin-top:18px" onclick="printEtiket()">🖨️ Printen</button>
+    </div>
+    <div id="printFout" style="color:#E53E3E;font-size:13px;margin-top:8px;display:none"></div>
   </div>
 
   <!-- Foto sectie -->
@@ -529,6 +544,51 @@ function bouwFotoGrid() {
   add.textContent = '+';
   add.onclick = () => document.getElementById('fotoInput').click();
   grid.appendChild(add);
+  }
+}
+
+// =====================
+// LABEL PRINTEN
+// =====================
+async function printEtiket() {
+  const fout = document.getElementById('printFout');
+  const aantal = parseInt(document.getElementById('aantalEtiketten').value) || 1;
+  fout.style.display = 'none';
+
+  const verkoopnummer = huidigOrder.verkoopnummer || '';
+  const referentie = huidigOrder.klantreferentie || '';
+  const adres = huidigOrder.afleveradres || '';
+
+  // ZPL label 21x10cm (794x378 dots bij 203dpi)
+  let zpl = '';
+  for (let i = 0; i < aantal; i++) {
+    zpl += `
+^XA
+^MMT
+^PW794
+^LL378
+^LS0
+^FO40,40^A0N,40,40^FDVerkoopnummer:^FS
+^FO40,90^A0N,50,50^FD${verkoopnummer}^FS
+^FO40,170^A0N,40,40^FDReferentie:^FS
+^FO40,220^A0N,50,50^FD${referentie}^FS
+^FO40,300^A0N,40,40^FDAdres:^FS
+^FO40,340^A0N,40,40^FD${adres}^FS
+^PQ1
+^XZ`;
+  }
+
+  try {
+    const BrowserPrint = window.BrowserPrint;
+    if (!BrowserPrint) throw new Error('Browser Print niet gevonden');
+
+    BrowserPrint.getDefaultDevice('printer', device => {
+      if (!device) { fout.textContent = '⚠ Geen printer gevonden. Controleer of Zebra Browser Print actief is.'; fout.style.display = 'block'; return; }
+      device.send(zpl, () => {}, err => { fout.textContent = '⚠ Printfout: ' + err; fout.style.display = 'block'; });
+    }, err => { fout.textContent = '⚠ Kan geen verbinding maken met printer: ' + err; fout.style.display = 'block'; });
+  } catch(e) {
+    fout.textContent = '⚠ Zebra Browser Print is niet geïnstalleerd of actief.';
+    fout.style.display = 'block';
   }
 }
 
