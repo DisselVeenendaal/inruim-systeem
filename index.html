@@ -379,7 +379,7 @@ async function zoekOrder() {
     };
 
     regels = data.map(r => ({
-      artnr: r['Art.nr'],
+      artnr: r['Artnr'],
       artikel: r['Artikelcode'],
       omschrijving: r['Omschrijving'],
       verwacht: Number(r['Verwacht']),
