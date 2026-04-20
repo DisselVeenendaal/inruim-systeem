@@ -415,7 +415,7 @@ function bouwInvulScherm() {
   regels.forEach((r, i) => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><span class="artikel-code">${r.artnr || '—'}</span></td>
+      <td><span class="artikel-code">${r.artnr ? r.artnr.toString().replace(',', '.') : '—'}</span></td>
       <td><span class="artikel-code">${r.artikel}</span></td>
       <td>${r.omschrijving}</td>
       <td style="font-weight:800;color:#1E3A5F;text-align:center">${r.verwacht}</td>
@@ -571,7 +571,7 @@ async function bevestig() {
     ${regels.map(r => {
       const afwijking = Number(r.geleverd) !== r.verwacht;
       return `<tr style="background:${afwijking ? '#FFF8F0' : 'white'};">
-        <td style="font-family:monospace;color:#555;">${r.artnr || '—'}</td>
+        <td style="font-family:monospace;color:#555;">${r.artnr ? r.artnr.toString().replace(',', '.') : '—'}</td>
         <td style="font-family:monospace;color:#555;">${r.artikel}</td>
         <td>${r.omschrijving}</td>
         <td style="text-align:center;font-weight:bold;">${r.verwacht}</td>
