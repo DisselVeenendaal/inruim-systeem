@@ -198,7 +198,8 @@
     <table class="tabel">
       <thead>
         <tr>
-          <th>Artikel</th>
+          <th>Art.nr</th>
+          <th>Art.lev.</th>
           <th>Omschrijving</th>
           <th>Verwacht</th>
           <th>Geleverd ✎</th>
@@ -378,6 +379,7 @@ async function zoekOrder() {
     };
 
     regels = data.map(r => ({
+      artnr: r['Art.nr'],
       artikel: r['Artikelcode'],
       omschrijving: r['Omschrijving'],
       verwacht: Number(r['Verwacht']),
@@ -413,6 +415,7 @@ function bouwInvulScherm() {
   regels.forEach((r, i) => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
+      <td><span class="artikel-code">${r.artnr || '—'}</span></td>
       <td><span class="artikel-code">${r.artikel}</span></td>
       <td>${r.omschrijving}</td>
       <td style="font-weight:800;color:#1E3A5F;text-align:center">${r.verwacht}</td>
@@ -555,7 +558,8 @@ async function bevestig() {
 <table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:13px;">
   <thead>
     <tr style="background:#1E3A5F;color:white;">
-      <th style="text-align:left;">Artikel</th>
+      <th style="text-align:left;">Art.nr</th>
+      <th style="text-align:left;">Art.lev.</th>
       <th style="text-align:left;">Omschrijving</th>
       <th style="text-align:center;">Verwacht</th>
       <th style="text-align:center;">Geleverd</th>
@@ -567,6 +571,7 @@ async function bevestig() {
     ${regels.map(r => {
       const afwijking = Number(r.geleverd) !== r.verwacht;
       return `<tr style="background:${afwijking ? '#FFF8F0' : 'white'};">
+        <td style="font-family:monospace;color:#555;">${r.artnr || '—'}</td>
         <td style="font-family:monospace;color:#555;">${r.artikel}</td>
         <td>${r.omschrijving}</td>
         <td style="text-align:center;font-weight:bold;">${r.verwacht}</td>
