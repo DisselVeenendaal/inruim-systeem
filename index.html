@@ -234,15 +234,11 @@
     </div>
   </div>
 
-  <!-- Opmerking + Email -->
+  <!-- Opmerking -->
   <div class="card">
-    <div style="margin-bottom:16px">
+    <div>
       <label>Opmerking (optioneel)</label>
       <textarea id="opmerking" rows="2" placeholder="Bijv. doos beschadigd, deellevering..." style="width:100%;border:1.5px solid #E2E8F0;border-radius:8px;padding:9px 12px;font-size:13px;resize:vertical;outline:none;color:#2D3748;font-family:inherit"></textarea>
-    </div>
-    <div>
-      <label>📧 E-mailadres voor melding</label>
-      <input type="email" id="emailAdres" placeholder="naam@bedrijf.nl">
     </div>
   </div>
 
@@ -537,13 +533,11 @@ function bouwFotoGrid() {
 // =====================
 async function bevestig() {
   const fout = document.getElementById('invulFout');
-  const email = document.getElementById('emailAdres').value.trim();
+  const email = 'magazijn@disselbv.nl';
 
-  if (!email) { fout.textContent = '⚠ Voer het e-mailadres in zodat de melding verstuurd kan worden.'; fout.classList.add('zichtbaar'); return; }
   for (let r of regels) {
     if (r.geleverd === '') { fout.textContent = '⚠ Vul bij alle regels het geleverde aantal in (ook als dit 0 is).'; fout.classList.add('zichtbaar'); return; }
-    if (!r.magazijn) { fout.textContent = '⚠ Selecteer bij alle regels een magazijn.'; fout.classList.add('zichtbaar'); return; }
-
+    if (Number(r.geleverd) > 0 && !r.magazijn) { fout.textContent = '⚠ Selecteer bij alle regels met geleverde artikelen een magazijn.'; fout.classList.add('zichtbaar'); return; }
   }
   if (fotos.length < 2) { fout.textContent = '⚠ Voeg precies 2 fotos van de pakbon toe.'; fout.classList.add('zichtbaar'); return; }
 
