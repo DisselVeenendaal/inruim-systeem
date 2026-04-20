@@ -574,14 +574,7 @@ async function bevestig() {
       </tr>`;
     }).join('')}
   </tbody>
-  <tfoot>
-    <tr style="background:#EBF8FF;font-weight:bold;">
-      <td colspan="3" style="color:#1E3A5F;">TOTAAL</td>
-      <td style="text-align:center;color:#1E3A5F;">${regels.reduce((s,r)=>s+r.verwacht,0)}</td>
-      <td style="text-align:center;color:${heeftAfwijking?'#E67E22':'#27AE60'};">${regels.reduce((s,r)=>s+(Number(r.geleverd)||0),0)}</td>
-      <td colspan="2"></td>
-    </tr>
-  </tfoot>
+
 </table>
 ${heeftAfwijking ? '<p style="color:#E67E22;font-weight:bold;margin-top:12px;">⚠ Let op: er zijn afwijkingen tussen verwacht en geleverd aantal.</p>' : ''}
 <p style="margin-top:16px;color:#718096;font-size:12px;">✅ Gecontroleerd en ingeruimd door: <strong>${huidigeMedewerker}</strong></p>
