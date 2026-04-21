@@ -632,7 +632,7 @@ async function bevestig() {
   const email = 'magazijn@disselbv.nl';
 
   for (let r of regels) {
-    if (r.geleverd === '') { fout.textContent = '⚠ Vul bij alle regels het geleverde aantal in (ook als dit 0 is).'; fout.classList.add('zichtbaar'); return; }
+    if (r.geleverd === '') r.geleverd = '0';
     if (Number(r.geleverd) > 0) {
       if (r.splits.length > 0) {
         const totaalSplit = r.splits.reduce((s, x) => s + (Number(x.aantal) || 0), 0);
