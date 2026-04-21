@@ -670,13 +670,20 @@ async function bevestig() {
   <tbody>
     ${regels.map(r => {
       const afwijking = Number(r.geleverd) !== r.verwacht;
-      if (r.splits.length > 0) {
-        return r.splits.map((s, j) => `<tr style="background:${afwijking ? '#FFF8F0' : 'white'};">
-          <td style="font-family:monospace;color:#555;">${j === 0 ? (r.artnr ? String(r.artnr).split(',').join('.') : '—') : ''}</td>
-          <td style="font-family:monospace;color:#555;">${j === 0 ? r.artikel : ''}</td>
-          <td>${j === 0 ? r.omschrijving : `<span style="color:#718096;font-size:11px;">↳ deel ${j+1}</span>`}</td>
-          <td style="text-align:center;font-weight:bold;">${j === 0 ? r.verwacht : ''}</td>
-          <td style="text-align:center;font-weight:bold;color:${afwijking ? '#E67E22' : '#27AE60'};">${j === 0 ? r.geleverd + (afwijking ? ' ⚠' : ' ✓') : s.aantal}</td>
+      if (r.splits && r.splits.length > 0) {
+        return `<tr style="background:${afwijking ? '#FFF8F0' : 'white'};">
+          <td style="font-family:monospace;color:#555;">${r.artnr ? String(r.artnr).split(',').join('.') : '—'}</td>
+          <td style="font-family:monospace;color:#555;">${r.artikel}</td>
+          <td>${r.omschrijving}</td>
+          <td style="text-align:center;font-weight:bold;">${r.verwacht}</td>
+          <td style="text-align:center;font-weight:bold;color:${afwijking ? '#E67E22' : '#27AE60'};">${r.geleverd}${afwijking ? ' ⚠' : ' ✓'}</td>
+          <td colspan="2" style="color:#718096;font-size:12px;">zie splits hieronder</td>
+        </tr>` + r.splits.map((s, j) => `<tr style="background:#F0FFF4;">
+          <td></td>
+          <td></td>
+          <td style="color:#718096;font-size:12px;">↳ deel ${j+1}</td>
+          <td></td>
+          <td style="text-align:center;font-weight:bold;color:#27AE60;">${s.aantal}</td>
           <td>Magazijn ${s.magazijn}</td>
           <td style="font-family:monospace;">${s.locatie}</td>
         </tr>`).join('');
