@@ -678,22 +678,17 @@ let scannerPauze = false;
 let scannerStream = null;
 let scannerAnimFrame = null;
 let barcodeDetector = null;
-const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+const isIOS = true; // Altijd foto-aanpak gebruiken — werkt op alle apparaten
 
 function openScanner() {
-  if (isIOS) {
-    // iOS: toon overlay met instructie, dan camera
-    document.getElementById('scannerOverlay').classList.add('actief');
-    scannerActief = true;
-    document.getElementById('scannerStatus').textContent = 'Camera opent zo…';
-    document.getElementById('scannerStatus').className = 'scanner-status';
-    document.getElementById('scannerVideo').style.display = 'none';
-    document.getElementById('btnOpnieuwScan').style.display = 'none';
-    setTimeout(() => document.getElementById('iosCameraInput').click(), 300);
-  } else {
-    // Android/Desktop: live video scanner
-    openLiveScanner();
-  }
+  // Foto-aanpak via native camera — betrouwbaar op iOS en Android
+  document.getElementById('scannerOverlay').classList.add('actief');
+  scannerActief = true;
+  document.getElementById('scannerStatus').textContent = 'Camera opent zo…';
+  document.getElementById('scannerStatus').className = 'scanner-status';
+  document.getElementById('scannerVideo').style.display = 'none';
+  document.getElementById('btnOpnieuwScan').style.display = 'none';
+  setTimeout(() => document.getElementById('iosCameraInput').click(), 300);
 }
 
 // =====================
