@@ -468,7 +468,7 @@ function herbouwRegel(i) {
       <td></td>
       <td><input type="number" min="0" class="input-geleverd ok" style="width:80px;" value="${s.aantal}" oninput="updateSplit(${i},${j},'aantal',this.value)" onchange="updateSplit(${i},${j},'aantal',this.value)"></td>
       <td><select class="magazijn-select${s.magazijn ? ' ok' : ''}" onchange="updateSplit(${i},${j},'magazijn',this.value)"><option value="">— kies —</option>${magazijnOpties(s.magazijn)}</select></td>
-      <td><input type="text" class="input-locatie${s.locatie ? ' ok' : ''}" placeholder="Bijv. A-01-03" value="${s.locatie}" oninput="updateSplit(${i},${j},'locatie',this.value)"></td>
+      <td><input type="text" class="input-locatie${s.locatie ? ' ok' : ''}" placeholder="Bijv. A-01-03" value="${s.locatie}" oninput="regels[${i}].splits[${j}].locatie=this.value" onchange="herbouwRegel(${i})"></td>
       <td><button onclick="verwijderSplit(${i},${j})" style="background:none;border:none;color:#E53E3E;font-size:18px;cursor:pointer;">×</button></td>
     `;
     tbody.appendChild(trs);
