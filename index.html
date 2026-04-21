@@ -207,6 +207,7 @@
           <th>Geleverd ✎</th>
           <th>Magazijn nr.</th>
           <th>Locatienr. ✎</th>
+          <th></th>
         </tr>
       </thead>
       <tbody id="regelsTbody"></tbody>
@@ -215,7 +216,7 @@
           <td colspan="3">TOTAAL</td>
           <td id="totaalVerwacht">0</td>
           <td id="totaalGeleverd">—</td>
-          <td></td><td></td>
+          <td></td><td></td><td></td>
         </tr>
       </tfoot>
     </table>
@@ -413,35 +414,104 @@ function bouwInvulScherm() {
   const tbody = document.getElementById('regelsTbody');
   tbody.innerHTML = '';
   regels.forEach((r, i) => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><span class="artikel-code">${r.artnr ? String(r.artnr).split(',').join('.') : '—'}</span></td>
-      <td><span class="artikel-code">${r.artikel}</span></td>
-      <td>${r.omschrijving}</td>
-      <td style="font-weight:800;color:#1E3A5F;text-align:center">${r.verwacht}</td>
-      <td>
-        <input type="number" min="0" class="input-geleverd" id="gel_${i}" placeholder="0" oninput="updateGeleverd(${i})">
-        <div class="afwijking-tekst" id="afw_${i}" style="display:none">⚠ afwijking</div>
-      </td>
-      <td>
-        <select class="magazijn-select" id="mag_${i}" onchange="updateMagazijn(${i})">
-          <option value="">— kies —</option>
-          <option value="1">Magazijn 1</option>
-          <option value="2">Magazijn 2</option>
-          <option value="3">Magazijn 3</option>
-          <option value="4">Magazijn 4</option>
-          <option value="5">Magazijn 5</option>
-        </select>
-      </td>
-      <td>
-        <input type="text" class="input-locatie" id="loc_${i}" placeholder="Bijv. A-01-03" oninput="updateLocatie(${i})">
-      </td>
-    `;
-    tbody.appendChild(tr);
+    if (!r.splits) r.splits = [];
+    herbouwRegel(i);
   });
 
   updateTotalen();
   bouwFotoGrid();
+}
+
+function magazijnOpties(geselecteerd) {
+  return [1,2,3,4,5].map(n => `<option value="${n}" ${geselecteerd == n ? 'selected' : ''}>Magazijn ${n}</option>`).join('');
+}
+
+function herbouwRegel(i) {
+  const tbody = document.getElementById('regelsTbody');
+  const r = regels[i];
+
+  // Verwijder bestaande rijen voor deze regel
+  document.querySelectorAll(`[data-regel="${i}"]`).forEach(el => el.remove());
+
+  // Hoofdrij
+  const tr = document.createElement('tr');
+  tr.dataset.regel = i;
+  tr.innerHTML = `
+    <td><span class="artikel-code">${r.artnr ? String(r.artnr).split(',').join('.') : '—'}</span></td>
+    <td><span class="artikel-code">${r.artikel}</span></td>
+    <td>${r.omschrijving}</td>
+    <td style="font-weight:800;color:#1E3A5F;text-align:center">${r.verwacht}</td>
+    <td>
+      <input type="number" min="0" class="input-geleverd" id="gel_${i}" placeholder="0" value="${r.geleverd}" oninput="updateGeleverd(${i})">
+      <div class="afwijking-tekst" id="afw_${i}" style="display:${r.geleverd !== '' && Number(r.geleverd) !== r.verwacht ? 'block' : 'none'}">⚠ afwijking</div>
+    </td>
+    <td>
+      ${r.splits.length === 0 ? `<select class="magazijn-select${r.magazijn ? ' ok' : ''}" id="mag_${i}" onchange="updateMagazijn(${i})"><option value="">— kies —</option>${magazijnOpties(r.magazijn)}</select>` : '<span style="font-size:11px;color:#A0AEC0;">zie splits</span>'}
+    </td>
+    <td>
+      ${r.splits.length === 0 ? `<input type="text" class="input-locatie${r.locatie ? ' ok' : ''}" id="loc_${i}" placeholder="Bijv. A-01-03" value="${r.locatie}" oninput="updateLocatie(${i})">` : ''}
+    </td>
+    <td>
+      ${Number(r.geleverd) > 0 ? `<button class="btn-primary" style="font-size:11px;padding:5px 10px;" onclick="voegSplitToe(${i})">+ Splitsen</button>` : ''}
+    </td>
+  `;
+  tbody.appendChild(tr);
+
+  // Splitrijen
+  r.splits.forEach((s, j) => {
+    const trs = document.createElement('tr');
+    trs.dataset.regel = i;
+    trs.style.background = '#F0FFF4';
+    trs.innerHTML = `
+      <td colspan="2" style="padding-left:24px;font-size:12px;color:#718096;">↳ deel ${j+1}</td>
+      <td></td>
+      <td></td>
+      <td><input type="number" min="0" class="input-geleverd ok" style="width:80px;" value="${s.aantal}" oninput="updateSplit(${i},${j},'aantal',this.value)"></td>
+      <td><select class="magazijn-select${s.magazijn ? ' ok' : ''}" onchange="updateSplit(${i},${j},'magazijn',this.value)"><option value="">— kies —</option>${magazijnOpties(s.magazijn)}</select></td>
+      <td><input type="text" class="input-locatie${s.locatie ? ' ok' : ''}" placeholder="Bijv. A-01-03" value="${s.locatie}" oninput="updateSplit(${i},${j},'locatie',this.value)"></td>
+      <td><button onclick="verwijderSplit(${i},${j})" style="background:none;border:none;color:#E53E3E;font-size:18px;cursor:pointer;">×</button></td>
+    `;
+    tbody.appendChild(trs);
+  });
+
+  // Split totaal validatie
+  if (r.splits.length > 0) {
+    const totaalSplit = r.splits.reduce((s, x) => s + (Number(x.aantal) || 0), 0);
+    const klopt = totaalSplit === Number(r.geleverd);
+    const trv = document.createElement('tr');
+    trv.dataset.regel = i;
+    trv.style.background = '#F0FFF4';
+    trv.innerHTML = `
+      <td colspan="4"></td>
+      <td style="font-size:11px;font-weight:700;color:${klopt ? '#27AE60' : '#E53E3E'};">
+        Totaal: ${totaalSplit} / ${r.geleverd} ${klopt ? '✓' : '⚠'}
+      </td>
+      <td colspan="3"></td>
+    `;
+    tbody.appendChild(trv);
+  }
+}
+
+function voegSplitToe(i) {
+  const r = regels[i];
+  if (r.splits.length === 0) {
+    r.splits.push({ aantal: Number(r.geleverd), magazijn: r.magazijn, locatie: r.locatie });
+    r.splits.push({ aantal: 0, magazijn: '', locatie: '' });
+  } else {
+    r.splits.push({ aantal: 0, magazijn: '', locatie: '' });
+  }
+  herbouwRegel(i);
+}
+
+function verwijderSplit(i, j) {
+  regels[i].splits.splice(j, 1);
+  if (regels[i].splits.length === 1) regels[i].splits = [];
+  herbouwRegel(i);
+}
+
+function updateSplit(i, j, veld, waarde) {
+  regels[i].splits[j][veld] = veld === 'aantal' ? waarde : waarde;
+  herbouwRegel(i);
 }
 
 function updateGeleverd(i) {
@@ -541,7 +611,17 @@ async function bevestig() {
 
   for (let r of regels) {
     if (r.geleverd === '') { fout.textContent = '⚠ Vul bij alle regels het geleverde aantal in (ook als dit 0 is).'; fout.classList.add('zichtbaar'); return; }
-    if (Number(r.geleverd) > 0 && !r.magazijn) { fout.textContent = '⚠ Selecteer bij alle regels met geleverde artikelen een magazijn.'; fout.classList.add('zichtbaar'); return; }
+    if (Number(r.geleverd) > 0) {
+      if (r.splits.length > 0) {
+        const totaalSplit = r.splits.reduce((s, x) => s + (Number(x.aantal) || 0), 0);
+        if (totaalSplit !== Number(r.geleverd)) { fout.textContent = `⚠ De splits van "${r.omschrijving}" tellen niet op tot het geleverde aantal (${totaalSplit} ≠ ${r.geleverd}).`; fout.classList.add('zichtbaar'); return; }
+        for (let s of r.splits) {
+          if (!s.magazijn) { fout.textContent = '⚠ Selecteer bij alle splits een magazijn.'; fout.classList.add('zichtbaar'); return; }
+        }
+      } else {
+        if (!r.magazijn) { fout.textContent = '⚠ Selecteer bij alle regels met geleverde artikelen een magazijn.'; fout.classList.add('zichtbaar'); return; }
+      }
+    }
   }
   
 
@@ -570,6 +650,17 @@ async function bevestig() {
   <tbody>
     ${regels.map(r => {
       const afwijking = Number(r.geleverd) !== r.verwacht;
+      if (r.splits.length > 0) {
+        return r.splits.map((s, j) => `<tr style="background:${afwijking ? '#FFF8F0' : 'white'};">
+          <td style="font-family:monospace;color:#555;">${j === 0 ? (r.artnr ? String(r.artnr).split(',').join('.') : '—') : ''}</td>
+          <td style="font-family:monospace;color:#555;">${j === 0 ? r.artikel : ''}</td>
+          <td>${j === 0 ? r.omschrijving : `<span style="color:#718096;font-size:11px;">↳ deel ${j+1}</span>`}</td>
+          <td style="text-align:center;font-weight:bold;">${j === 0 ? r.verwacht : ''}</td>
+          <td style="text-align:center;font-weight:bold;color:${afwijking ? '#E67E22' : '#27AE60'};">${j === 0 ? r.geleverd + (afwijking ? ' ⚠' : ' ✓') : s.aantal}</td>
+          <td>Magazijn ${s.magazijn}</td>
+          <td style="font-family:monospace;">${s.locatie}</td>
+        </tr>`).join('');
+      }
       return `<tr style="background:${afwijking ? '#FFF8F0' : 'white'};">
         <td style="font-family:monospace;color:#555;">${r.artnr ? String(r.artnr).split(',').join('.') : '—'}</td>
         <td style="font-family:monospace;color:#555;">${r.artikel}</td>
