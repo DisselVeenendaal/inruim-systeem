@@ -203,6 +203,7 @@
           <th>Art.nr</th>
           <th>Art.lev.</th>
           <th>Omschrijving</th>
+          <th>Opmerking</th>
           <th>Verwacht</th>
           <th>Geleverd ✎</th>
           <th>Magazijn nr.</th>
@@ -380,6 +381,7 @@ async function zoekOrder() {
       artnr: r['Artnr'],
       artikel: r['Artikelcode'],
       omschrijving: r['Omschrijving'],
+      opmerking: r['Opmerking'] || '',
       verwacht: Number(r['Verwacht']),
       geleverd: '',
       magazijn: '',
@@ -439,6 +441,7 @@ function herbouwRegel(i) {
     <td><span class="artikel-code">${r.artnr ? String(r.artnr).split(',').join('.') : '—'}</span></td>
     <td><span class="artikel-code">${r.artikel}</span></td>
     <td>${r.omschrijving}</td>
+    <td style="font-size:12px;color:#718096;">${r.opmerking}</td>
     <td style="font-weight:800;color:#1E3A5F;text-align:center">${r.verwacht}</td>
     <td>
       <input type="number" min="0" class="input-geleverd" id="gel_${i}" placeholder="0" value="${r.geleverd}" oninput="updateGeleverd(${i})" onchange="updateGeleverdKlaar(${i})">
@@ -660,6 +663,7 @@ async function bevestig() {
       <th style="text-align:left;">Art.nr</th>
       <th style="text-align:left;">Art.lev.</th>
       <th style="text-align:left;">Omschrijving</th>
+      <th style="text-align:left;">Opmerking</th>
       <th style="text-align:center;">Verwacht</th>
       <th style="text-align:center;">Geleverd</th>
       <th style="text-align:left;">Magazijn</th>
@@ -674,6 +678,7 @@ async function bevestig() {
           <td style="font-family:monospace;color:#555;">${r.artnr ? String(r.artnr).split(',').join('.') : '—'}</td>
           <td style="font-family:monospace;color:#555;">${r.artikel}</td>
           <td>${r.omschrijving}</td>
+          <td style="color:#718096;font-size:12px;">${r.opmerking}</td>
           <td style="text-align:center;font-weight:bold;">${r.verwacht}</td>
           <td style="text-align:center;font-weight:bold;color:${afwijking ? '#E67E22' : '#27AE60'};">${r.geleverd}${afwijking ? ' ⚠' : ' ✓'}</td>
           <td colspan="2" style="color:#718096;font-size:12px;">zie splits hieronder</td>
@@ -681,6 +686,7 @@ async function bevestig() {
           <td></td>
           <td></td>
           <td style="color:#718096;font-size:12px;">↳ deel ${j+1}</td>
+          <td></td>
           <td></td>
           <td style="text-align:center;font-weight:bold;color:#27AE60;">${s.aantal}</td>
           <td>Magazijn ${s.magazijn}</td>
@@ -691,6 +697,7 @@ async function bevestig() {
         <td style="font-family:monospace;color:#555;">${r.artnr ? String(r.artnr).split(',').join('.') : '—'}</td>
         <td style="font-family:monospace;color:#555;">${r.artikel}</td>
         <td>${r.omschrijving}</td>
+        <td style="color:#718096;font-size:12px;">${r.opmerking}</td>
         <td style="text-align:center;font-weight:bold;">${r.verwacht}</td>
         <td style="text-align:center;font-weight:bold;color:${afwijking ? '#E67E22' : '#27AE60'};">${r.geleverd}${afwijking ? ' ⚠' : ' ✓'}</td>
         <td>Magazijn ${r.magazijn}</td>
