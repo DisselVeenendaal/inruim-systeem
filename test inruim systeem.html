@@ -319,6 +319,7 @@
       <div class="scanner-hoeken"></div>
     </div>
     <div class="scanner-status" id="scannerStatus">Camera wordt gestart…</div>
+    <div id="scannerDebug" style="display:none;font-size:10px;color:#718096;text-align:center;margin-top:4px;word-break:break-all;padding:0 8px;"></div>
     <div class="scanner-tip">Houd de barcode stil en zorg voor goede belichting</div>
     <button class="btn-scanner-sluiten" onclick="sluitScanner()">✕ Sluiten</button>
   </div>
@@ -686,39 +687,56 @@ async function openScanner() {
   const video = document.getElementById('scannerVideo');
   video.style.display = 'block';
 
+  // Debug info tonen
+  const debugInfo = [
+    'mediaDevices: ' + (!!navigator.mediaDevices),
+    'getUserMedia: ' + (!!navigator.mediaDevices?.getUserMedia),
+    'BarcodeDetector: ' + ('BarcodeDetector' in window),
+    'HTTPS: ' + (location.protocol === 'https:'),
+    'iOS: ' + /iPhone|iPad|iPod/.test(navigator.userAgent)
+  ].join(' | ');
+  document.getElementById('scannerDebug').textContent = debugInfo;
+  document.getElementById('scannerDebug').style.display = 'block';
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    statusEl.textContent = '⚠ Camera-API niet beschikbaar op dit apparaat/browser.';
+    statusEl.className = 'scanner-status fout';
+    return;
+  }
+
   try {
+    statusEl.textContent = 'Cameratoestemming vragen…';
     scannerStream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: { ideal: 'environment' },
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
-      },
+      video: { facingMode: { ideal: 'environment' } },
       audio: false
     });
     video.srcObject = scannerStream;
     await video.play();
     statusEl.textContent = 'Richt de camera op een EAN-barcode…';
 
-    // Canvas voor frame-analyse
     scannerCanvas = document.createElement('canvas');
     scannerCtx = scannerCanvas.getContext('2d', { willReadFrequently: true });
 
-    // Probeer BarcodeDetector (Android Chrome, nieuwere browsers)
     if ('BarcodeDetector' in window) {
       barcodeDetector = new BarcodeDetector({
         formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39']
       });
       scanFrameDetector(video);
     } else {
-      // Fallback: ZXing via CDN dynamisch laden
       statusEl.textContent = 'Scanner laden…';
       laadZxingFallback(video);
     }
 
   } catch(e) {
-    statusEl.textContent = '⚠ Camera niet beschikbaar. Controleer of je toestemming hebt gegeven.';
+    let melding = '⚠ ';
+    if (e.name === 'NotAllowedError') melding += 'Cameratoestemming geweigerd. Ga naar instellingen en sta camera toe voor deze site.';
+    else if (e.name === 'NotFoundError') melding += 'Geen camera gevonden op dit apparaat.';
+    else if (e.name === 'NotReadableError') melding += 'Camera wordt al gebruikt door een andere app.';
+    else if (e.name === 'OverconstrainedError') melding += 'Camera voldoet niet aan de vereisten.';
+    else melding += e.name + ': ' + e.message;
+    statusEl.textContent = melding;
     statusEl.className = 'scanner-status fout';
-    console.error('Camera fout:', e);
+    document.getElementById('scannerDebug').textContent += ' | Fout: ' + e.name;
   }
 }
 
