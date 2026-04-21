@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TEST - Dissel BV Inruim Systeem</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.21.3/zxing.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Segoe UI', system-ui, sans-serif; background: #F7FAFC; min-height: 100vh; }
@@ -129,6 +129,11 @@
   #scannerVideo { width:100%; height:260px; object-fit:cover; display:block; }
   .scanner-lijn { position:absolute; top:50%; left:5%; width:90%; height:2px; background:rgba(49,130,206,0.9); box-shadow:0 0 8px #3182CE; animation:scanLijn 2s ease-in-out infinite; }
   @keyframes scanLijn { 0%,100%{top:25%} 50%{top:75%} }
+  .scanner-hoeken { position:absolute; inset:0; pointer-events:none; }
+  .scanner-hoeken::before, .scanner-hoeken::after { content:''; position:absolute; width:28px; height:28px; border-color:#3182CE; border-style:solid; }
+  .scanner-hoeken::before { top:24%; left:5%; border-width:3px 0 0 3px; }
+  .scanner-hoeken::after  { bottom:24%; right:5%; border-width:0 3px 3px 0; }
+  .scanner-tip { color:#A0AEC0; font-size:11px; text-align:center; margin-top:6px; }
   .scanner-status { color:#A0AEC0; font-size:13px; text-align:center; margin:12px 0 6px; min-height:36px; }
   .scanner-status.gevonden { color:#27AE60; font-weight:700; }
   .scanner-status.fout { color:#E53E3E; font-weight:700; }
@@ -309,11 +314,13 @@
 <div class="scanner-overlay" id="scannerOverlay">
   <div class="scanner-box">
     <div class="scanner-titel">📷 Scan EAN-barcode</div>
-    <div class="scanner-video-wrap">
+    <div class="scanner-video-wrap" id="scannerVideoWrap">
       <video id="scannerVideo" autoplay muted playsinline></video>
       <div class="scanner-lijn"></div>
+      <div class="scanner-hoeken"></div>
     </div>
     <div class="scanner-status" id="scannerStatus">Camera wordt gestart…</div>
+    <div class="scanner-tip">Houd de barcode stil en zorg voor goede belichting</div>
     <button class="btn-scanner-sluiten" onclick="sluitScanner()">✕ Sluiten</button>
   </div>
 </div>
@@ -659,93 +666,98 @@ function bouwFotoGrid() {
 }
 
 // =====================
-// BARCODE SCANNER
+// BARCODE SCANNER (QuaggaJS - werkt op iOS Safari)
 // =====================
-let scannerStream = null;
-let scannerCodeReader = null;
 let scannerActief = false;
+let scannerPauze = false;
 
-async function openScanner() {
+function openScanner() {
   document.getElementById('scannerOverlay').classList.add('actief');
   document.getElementById('scannerStatus').textContent = 'Camera wordt gestart…';
   document.getElementById('scannerStatus').className = 'scanner-status';
   scannerActief = true;
+  scannerPauze = false;
 
-  try {
-    // Vraag camera toegang
-    scannerStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
-    });
-    const video = document.getElementById('scannerVideo');
-    video.srcObject = scannerStream;
-    await video.play();
+  // Verberg het <video> element — Quagga beheert de video zelf in de container
+  document.getElementById('scannerVideo').style.display = 'none';
 
-    document.getElementById('scannerStatus').textContent = 'Richt de camera op een EAN-barcode…';
-
-    // Start ZXing scanner
-    if (typeof ZXing !== 'undefined') {
-      const hints = new Map();
-      const formats = [
-        ZXing.BarcodeFormat.EAN_13,
-        ZXing.BarcodeFormat.EAN_8,
-        ZXing.BarcodeFormat.UPC_A,
-        ZXing.BarcodeFormat.UPC_E,
-        ZXing.BarcodeFormat.CODE_128,
-        ZXing.BarcodeFormat.CODE_39
-      ];
-      hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, formats);
-      scannerCodeReader = new ZXing.BrowserMultiFormatReader(hints);
-      scannerCodeReader.decodeFromVideoElement(video, (result, err) => {
-        if (!scannerActief) return;
-        if (result) {
-          verwerkBarcode(result.getText());
-        }
-      });
-    } else {
-      // Fallback: gebruik canvas-polling als ZXing niet beschikbaar is
-      startCanvasScanner();
+  Quagga.init({
+    inputStream: {
+      name: 'Live',
+      type: 'LiveStream',
+      target: document.getElementById('scannerVideoWrap'),
+      constraints: {
+        facingMode: 'environment',
+        width: { min: 640, ideal: 1280, max: 1920 },
+        height: { min: 480, ideal: 720, max: 1080 }
+      },
+      area: { top: '25%', right: '5%', left: '5%', bottom: '25%' }
+    },
+    decoder: {
+      readers: ['ean_reader', 'ean_8_reader', 'upc_reader', 'upc_e_reader', 'code_128_reader'],
+      multiple: false
+    },
+    locator: {
+      patchSize: 'medium',
+      halfSample: false
+    },
+    numOfWorkers: 2,
+    locate: true,
+    frequency: 15
+  }, function(err) {
+    if (err) {
+      document.getElementById('scannerStatus').textContent = '\u26a0 Camera niet beschikbaar: ' + (err.message || 'geen toegang');
+      document.getElementById('scannerStatus').className = 'scanner-status fout';
+      return;
     }
-  } catch(e) {
-    document.getElementById('scannerStatus').textContent = '⚠ Camera niet beschikbaar: ' + (e.message || 'geen toegang');
-    document.getElementById('scannerStatus').className = 'scanner-status fout';
-  }
-}
+    Quagga.start();
+    document.getElementById('scannerStatus').textContent = 'Richt de camera op een EAN-barcode…';
+  });
 
-function startCanvasScanner() {
-  // Eenvoudige fallback polling via canvas (beperkte EAN-ondersteuning)
-  document.getElementById('scannerStatus').textContent = 'Richt de camera op een EAN-barcode…';
+  // Betrouwbaarheidsfilter: alleen scans met hoge zekerheid doorgeven
+  Quagga.onDetected(function(result) {
+    if (!scannerActief || scannerPauze) return;
+    const errors = result.codeResult.decodedCodes
+      .filter(c => c.error !== undefined)
+      .map(c => c.error);
+    const gemiddeldeFout = errors.length ? errors.reduce((s, e) => s + e, 0) / errors.length : 1;
+    if (gemiddeldeFout > 0.30) return;
+    const code = result.codeResult.code;
+    if (code) verwerkBarcode(code);
+  });
 }
 
 function sluitScanner() {
   scannerActief = false;
   document.getElementById('scannerOverlay').classList.remove('actief');
-  if (scannerCodeReader) {
-    try { scannerCodeReader.reset(); } catch(e) {}
-    scannerCodeReader = null;
-  }
-  if (scannerStream) {
-    scannerStream.getTracks().forEach(t => t.stop());
-    scannerStream = null;
-  }
-  document.getElementById('scannerVideo').srcObject = null;
+  try { Quagga.offDetected(); Quagga.stop(); } catch(e) {}
+  // Herstel video element
+  document.getElementById('scannerVideo').style.display = 'block';
+  // Verwijder Quagga's eigen video element
+  const wrap = document.getElementById('scannerVideoWrap');
+  const q = wrap.querySelector('video:not(#scannerVideo)');
+  if (q) q.remove();
+  const canvas = wrap.querySelectorAll('canvas');
+  canvas.forEach(c => c.remove());
 }
 
 function verwerkBarcode(eanGescand) {
-  if (!scannerActief) return;
+  if (!scannerActief || scannerPauze) return;
+  scannerPauze = true; // Voorkom dubbele scans
 
   const statusEl = document.getElementById('scannerStatus');
 
   // Zoek artikel met dit EAN
-  const idx = regels.findIndex(r => r.ean && r.ean === eanGescand);
+  const idx = regels.findIndex(r => r.ean && String(r.ean).trim() === String(eanGescand).trim());
 
   if (idx === -1) {
     statusEl.textContent = `⚠ EAN ${eanGescand} niet gevonden in deze order`;
     statusEl.className = 'scanner-status fout';
-    // Na 2 sec weer klaar voor volgende scan
     setTimeout(() => {
       if (scannerActief) {
         statusEl.textContent = 'Richt de camera op een EAN-barcode…';
         statusEl.className = 'scanner-status';
+        scannerPauze = false;
       }
     }, 2000);
     return;
@@ -764,19 +776,19 @@ function verwerkBarcode(eanGescand) {
 
   // Feedback tonen
   const artikel = regels[idx].omschrijving;
-  const nieuwAantal = regels[idx].geleverd;
-  statusEl.textContent = `✅ ${artikel} → geleverd: ${nieuwAantal}`;
+  statusEl.textContent = `✅ ${artikel} → geleverd: ${regels[idx].geleverd}`;
   statusEl.className = 'scanner-status gevonden';
 
-  // Scroll naar artikel
+  // Scroll naar artikel in de achtergrond
   const regelEl = document.querySelector(`[data-regel="${idx}"]`);
   if (regelEl) regelEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-  // Korte pauze dan weer klaar
+  // Na 1.8 sec weer klaar voor volgende scan
   setTimeout(() => {
     if (scannerActief) {
       statusEl.textContent = 'Richt de camera op een EAN-barcode…';
       statusEl.className = 'scanner-status';
+      scannerPauze = false;
     }
   }, 1800);
 }
