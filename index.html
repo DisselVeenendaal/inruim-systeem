@@ -517,11 +517,7 @@ function updateSplit(i, j, veld, waarde) {
 function updateGeleverd(i) {
   const val = document.getElementById('gel_' + i).value;
   regels[i].geleverd = val;
-  const el = document.getElementById('gel_' + i);
-  const afw = document.getElementById('afw_' + i);
-  const afwijking = val !== '' && Number(val) !== regels[i].verwacht;
-  el.className = 'input-geleverd' + (val !== '' ? (afwijking ? ' afwijking' : ' ok') : '');
-  afw.style.display = afwijking ? 'block' : 'none';
+  herbouwRegel(i);
   updateTotalen();
 }
 
