@@ -125,7 +125,7 @@
   .scanner-box { background:#1E3A5F; border-radius:16px; padding:20px; width:min(95vw,480px); }
   .scanner-titel { color:white; font-weight:800; font-size:16px; margin-bottom:12px; text-align:center; }
   .scanner-video-wrap { position:relative; border-radius:10px; overflow:hidden; background:#000; }
-  #scannerVideo { width:100%; height:260px; object-fit:cover; display:block; }
+  #scannerVideo { width:100%; height:260px; object-fit:cover; display:block; background:#000; -webkit-transform: translateZ(0); transform: translateZ(0); }
   .scanner-lijn { position:absolute; top:50%; left:5%; width:90%; height:2px; background:rgba(49,130,206,0.9); box-shadow:0 0 8px #3182CE; animation:scanLijn 2s ease-in-out infinite; }
   @keyframes scanLijn { 0%,100%{top:25%} 50%{top:75%} }
   .scanner-hoeken { position:absolute; inset:0; pointer-events:none; }
@@ -687,16 +687,19 @@ async function openScanner() {
   const video = document.getElementById('scannerVideo');
   video.style.display = 'block';
 
-  // Debug info tonen
+  // Debug info DIRECT tonen (voor getUserMedia)
+  const md = navigator.mediaDevices;
   const debugInfo = [
-    'mediaDevices: ' + (!!navigator.mediaDevices),
-    'getUserMedia: ' + (!!navigator.mediaDevices?.getUserMedia),
-    'BarcodeDetector: ' + ('BarcodeDetector' in window),
-    'HTTPS: ' + (location.protocol === 'https:'),
-    'iOS: ' + /iPhone|iPad|iPod/.test(navigator.userAgent)
+    'md:' + (!!md),
+    'gum:' + (!!(md && md.getUserMedia)),
+    'BD:' + ('BarcodeDetector' in window),
+    'https:' + (location.protocol === 'https:'),
+    'iOS:' + /iPhone|iPad|iPod/.test(navigator.userAgent),
+    'UA:' + navigator.userAgent.substring(0, 40)
   ].join(' | ');
-  document.getElementById('scannerDebug').textContent = debugInfo;
-  document.getElementById('scannerDebug').style.display = 'block';
+  const dbg = document.getElementById('scannerDebug');
+  dbg.textContent = debugInfo;
+  dbg.style.display = 'block';
 
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     statusEl.textContent = '⚠ Camera-API niet beschikbaar op dit apparaat/browser.';
