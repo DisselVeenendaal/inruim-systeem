@@ -190,6 +190,8 @@
       <div class="order-meta-item"><span>Leverancier</span><span id="toonLeverancier"></span></div>
       <div class="order-meta-item"><span>Datum</span><span id="toonDatum"></span></div>
       <div class="order-meta-item"><span>Artikelen</span><span id="toonAantal"></span></div>
+      <div class="order-meta-item"><span>Verkoopnummer</span><span id="toonVerkoopnummer"></span></div>
+      <div class="order-meta-item"><span>Klantreferentie</span><span id="toonKlantreferentie"></span></div>
     </div>
   </div>
 
@@ -405,6 +407,8 @@ function bouwInvulScherm() {
   document.getElementById('toonLeverancier').textContent = huidigOrder.leverancier;
   document.getElementById('toonDatum').textContent = new Date().toLocaleDateString('nl-NL');
   document.getElementById('toonAantal').textContent = regels.length + ' artikelen';
+  document.getElementById('toonVerkoopnummer').textContent = huidigOrder.verkoopnummer || '—';
+  document.getElementById('toonKlantreferentie').textContent = huidigOrder.klantreferentie || '—';
 
   const tbody = document.getElementById('regelsTbody');
   tbody.innerHTML = '';
