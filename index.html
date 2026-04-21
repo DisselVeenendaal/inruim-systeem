@@ -539,6 +539,8 @@ async function bevestig() {
     if (r.geleverd === '') { fout.textContent = '⚠ Vul bij alle regels het geleverde aantal in (ook als dit 0 is).'; fout.classList.add('zichtbaar'); return; }
     if (Number(r.geleverd) > 0 && !r.magazijn) { fout.textContent = '⚠ Selecteer bij alle regels met geleverde artikelen een magazijn.'; fout.classList.add('zichtbaar'); return; }
   }
+  
+
   if (fotos.length < 2) { fout.textContent = '⚠ Voeg precies 2 fotos van de pakbon toe.'; fout.classList.add('zichtbaar'); return; }
 
   fout.classList.remove('zichtbaar');
