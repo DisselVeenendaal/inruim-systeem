@@ -53,26 +53,26 @@
 
   /* Tabel */
   .tabel-wrap { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); border: 1px solid #E2E8F0; margin-bottom: 16px; overflow-x: auto; }
-  .tabel { width: 100%; border-collapse: collapse; min-width: 600px; }
+  .tabel { width: 100%; border-collapse: collapse; min-width: 700px; }
   .tabel thead tr { background: #1E3A5F; }
-  .tabel thead th { color: white; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; padding: 10px 12px; text-align: left; }
+  .tabel thead th { color: white; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; padding: 8px 6px; text-align: left; }
   .tabel tbody tr:nth-child(even) { background: #F7FAFC; }
   .tabel tbody tr:nth-child(odd) { background: white; }
-  .tabel tbody td { padding: 10px 12px; border-bottom: 1px solid #EDF2F7; vertical-align: middle; font-size: 13px; color: #2D3748; }
+  .tabel tbody td { padding: 8px 6px; border-bottom: 1px solid #EDF2F7; vertical-align: middle; font-size: 12px; color: #2D3748; }
   .tabel tfoot tr { background: #EBF8FF; border-top: 2px solid #3182CE; }
-  .tabel tfoot td { padding: 10px 12px; font-weight: 800; font-size: 14px; color: #1E3A5F; }
-  .artikel-code { font-family: monospace; font-size: 11px; color: #718096; }
+  .tabel tfoot td { padding: 8px 6px; font-weight: 800; font-size: 13px; color: #1E3A5F; }
+  .artikel-code { font-family: monospace; font-size: 10px; color: #718096; }
 
   /* Invoervelden in tabel */
-  .input-geleverd { width: 80px; border: 2px solid #E2E8F0; border-radius: 6px; padding: 6px 8px; font-size: 13px; font-weight: 700; text-align: center; outline: none; }
+  .input-geleverd { width: 60px; border: 2px solid #E2E8F0; border-radius: 6px; padding: 4px 4px; font-size: 12px; font-weight: 700; text-align: center; outline: none; }
   .input-geleverd.ok { border-color: #27AE60; color: #27AE60; background: #F0FFF4; }
   .input-geleverd.afwijking { border-color: #E67E22; color: #E67E22; background: #FFFAF0; }
   .afwijking-tekst { font-size: 10px; color: #E67E22; text-align: center; margin-top: 2px; }
 
-  select.magazijn-select { width: 110px; border: 2px solid #E2E8F0; border-radius: 6px; padding: 6px 8px; font-size: 12px; outline: none; cursor: pointer; }
+  select.magazijn-select { width: 95px; border: 2px solid #E2E8F0; border-radius: 6px; padding: 4px 4px; font-size: 11px; outline: none; cursor: pointer; }
   select.magazijn-select.ok { border-color: #3182CE; color: #1E3A5F; background: #EBF8FF; font-weight: 700; }
 
-  .input-locatie { width: 110px; border: 2px solid #E2E8F0; border-radius: 6px; padding: 6px 8px; font-size: 12px; outline: none; }
+  .input-locatie { width: 80px; border: 2px solid #E2E8F0; border-radius: 6px; padding: 4px 4px; font-size: 11px; outline: none; }
   .input-locatie.ok { border-color: #3182CE; background: #EBF8FF; font-weight: 600; font-family: monospace; }
 
   /* Totaalbalk */
@@ -454,7 +454,7 @@ function herbouwRegel(i) {
       ${r.splits.length === 0 ? `<input type="text" class="input-locatie${r.locatie ? ' ok' : ''}" id="loc_${i}" placeholder="Bijv. A-01-03" value="${r.locatie}" oninput="updateLocatie(${i})">` : ''}
     </td>
     <td>
-      ${Number(r.geleverd) > 0 ? `<button id="splitBtn_${i}" class="btn-primary" style="font-size:11px;padding:5px 10px;" onclick="voegSplitToe(${i})">+ Splitsen</button>` : `<button id="splitBtn_${i}" class="btn-primary" style="font-size:11px;padding:5px 10px;display:none;" onclick="voegSplitToe(${i})">+ Splitsen</button>`}
+      ${Number(r.geleverd) > 0 ? `<button id="splitBtn_${i}" class="btn-primary" style="font-size:10px;padding:4px 7px;" onclick="voegSplitToe(${i})">+ Splitsen</button>` : `<button id="splitBtn_${i}" class="btn-primary" style="font-size:10px;padding:4px 7px;display:none;" onclick="voegSplitToe(${i})">+ Splitsen</button>`}
     </td>
   `;
   tbody.appendChild(tr);
