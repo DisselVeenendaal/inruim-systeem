@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TEST - Dissel BV Inruim Systeem</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Segoe UI', system-ui, sans-serif; background: #F7FAFC; min-height: 100vh; }
@@ -666,88 +665,118 @@ function bouwFotoGrid() {
 }
 
 // =====================
-// BARCODE SCANNER (QuaggaJS - werkt op iOS Safari)
+// BARCODE SCANNER (getUserMedia + BarcodeDetector + canvas fallback)
 // =====================
 let scannerActief = false;
 let scannerPauze = false;
+let scannerStream = null;
+let scannerAnimFrame = null;
+let scannerCanvas = null;
+let scannerCtx = null;
+let barcodeDetector = null;
 
-function openScanner() {
+async function openScanner() {
   document.getElementById('scannerOverlay').classList.add('actief');
-  document.getElementById('scannerStatus').textContent = 'Camera wordt gestart…';
-  document.getElementById('scannerStatus').className = 'scanner-status';
+  const statusEl = document.getElementById('scannerStatus');
+  statusEl.textContent = 'Camera wordt gestart…';
+  statusEl.className = 'scanner-status';
   scannerActief = true;
   scannerPauze = false;
 
-  // Verberg het <video> element — Quagga beheert de video zelf in de container
-  document.getElementById('scannerVideo').style.display = 'none';
+  const video = document.getElementById('scannerVideo');
+  video.style.display = 'block';
 
-  Quagga.init({
-    inputStream: {
-      name: 'Live',
-      type: 'LiveStream',
-      target: document.getElementById('scannerVideoWrap'),
-      constraints: {
-        facingMode: 'environment',
-        width: { min: 640, ideal: 1280, max: 1920 },
-        height: { min: 480, ideal: 720, max: 1080 }
+  try {
+    scannerStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: 'environment' },
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
       },
-      area: { top: '25%', right: '5%', left: '5%', bottom: '25%' }
-    },
-    decoder: {
-      readers: ['ean_reader', 'ean_8_reader', 'upc_reader', 'upc_e_reader', 'code_128_reader'],
-      multiple: false
-    },
-    locator: {
-      patchSize: 'medium',
-      halfSample: false
-    },
-    numOfWorkers: 2,
-    locate: true,
-    frequency: 15
-  }, function(err) {
-    if (err) {
-      document.getElementById('scannerStatus').textContent = '\u26a0 Camera niet beschikbaar: ' + (err.message || 'geen toegang');
-      document.getElementById('scannerStatus').className = 'scanner-status fout';
-      return;
-    }
-    Quagga.start();
-    document.getElementById('scannerStatus').textContent = 'Richt de camera op een EAN-barcode…';
-  });
+      audio: false
+    });
+    video.srcObject = scannerStream;
+    await video.play();
+    statusEl.textContent = 'Richt de camera op een EAN-barcode…';
 
-  // Betrouwbaarheidsfilter: alleen scans met hoge zekerheid doorgeven
-  Quagga.onDetected(function(result) {
-    if (!scannerActief || scannerPauze) return;
-    const errors = result.codeResult.decodedCodes
-      .filter(c => c.error !== undefined)
-      .map(c => c.error);
-    const gemiddeldeFout = errors.length ? errors.reduce((s, e) => s + e, 0) / errors.length : 1;
-    if (gemiddeldeFout > 0.30) return;
-    const code = result.codeResult.code;
-    if (code) verwerkBarcode(code);
-  });
+    // Canvas voor frame-analyse
+    scannerCanvas = document.createElement('canvas');
+    scannerCtx = scannerCanvas.getContext('2d', { willReadFrequently: true });
+
+    // Probeer BarcodeDetector (Android Chrome, nieuwere browsers)
+    if ('BarcodeDetector' in window) {
+      barcodeDetector = new BarcodeDetector({
+        formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39']
+      });
+      scanFrameDetector(video);
+    } else {
+      // Fallback: ZXing via CDN dynamisch laden
+      statusEl.textContent = 'Scanner laden…';
+      laadZxingFallback(video);
+    }
+
+  } catch(e) {
+    statusEl.textContent = '⚠ Camera niet beschikbaar. Controleer of je toestemming hebt gegeven.';
+    statusEl.className = 'scanner-status fout';
+    console.error('Camera fout:', e);
+  }
+}
+
+// --- BarcodeDetector loop ---
+async function scanFrameDetector(video) {
+  if (!scannerActief) return;
+  try {
+    const barcodes = await barcodeDetector.detect(video);
+    if (barcodes.length > 0) {
+      verwerkBarcode(barcodes[0].rawValue);
+    }
+  } catch(e) {}
+  scannerAnimFrame = requestAnimationFrame(() => scanFrameDetector(video));
+}
+
+// --- ZXing fallback (dynamisch laden) ---
+function laadZxingFallback(video) {
+  const statusEl = document.getElementById('scannerStatus');
+  const script = document.createElement('script');
+  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.21.3/zxing.min.js';
+  script.onload = () => {
+    statusEl.textContent = 'Richt de camera op een EAN-barcode…';
+    const hints = new Map();
+    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+      ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8,
+      ZXing.BarcodeFormat.UPC_A, ZXing.BarcodeFormat.CODE_128
+    ]);
+    const reader = new ZXing.BrowserMultiFormatReader(hints, 300);
+    reader.decodeFromVideoElement(video, (result, err) => {
+      if (!scannerActief || scannerPauze) return;
+      if (result) verwerkBarcode(result.getText());
+    });
+    window._zxingReader = reader;
+  };
+  script.onerror = () => {
+    statusEl.textContent = '⚠ Scanner kon niet worden geladen. Probeer opnieuw.';
+    statusEl.className = 'scanner-status fout';
+  };
+  document.head.appendChild(script);
 }
 
 function sluitScanner() {
   scannerActief = false;
   document.getElementById('scannerOverlay').classList.remove('actief');
-  try { Quagga.offDetected(); Quagga.stop(); } catch(e) {}
-  // Herstel video element
-  document.getElementById('scannerVideo').style.display = 'block';
-  // Verwijder Quagga's eigen video element
-  const wrap = document.getElementById('scannerVideoWrap');
-  const q = wrap.querySelector('video:not(#scannerVideo)');
-  if (q) q.remove();
-  const canvas = wrap.querySelectorAll('canvas');
-  canvas.forEach(c => c.remove());
+  if (scannerAnimFrame) { cancelAnimationFrame(scannerAnimFrame); scannerAnimFrame = null; }
+  if (scannerStream) { scannerStream.getTracks().forEach(t => t.stop()); scannerStream = null; }
+  if (window._zxingReader) { try { window._zxingReader.reset(); } catch(e) {} window._zxingReader = null; }
+  const video = document.getElementById('scannerVideo');
+  video.srcObject = null;
+  video.pause();
+  barcodeDetector = null;
 }
 
 function verwerkBarcode(eanGescand) {
   if (!scannerActief || scannerPauze) return;
-  scannerPauze = true; // Voorkom dubbele scans
+  scannerPauze = true;
 
   const statusEl = document.getElementById('scannerStatus');
-
-  // Zoek artikel met dit EAN
   const idx = regels.findIndex(r => r.ean && String(r.ean).trim() === String(eanGescand).trim());
 
   if (idx === -1) {
@@ -763,27 +792,19 @@ function verwerkBarcode(eanGescand) {
     return;
   }
 
-  // Geleverd met 1 ophogen
   const huidig = Number(regels[idx].geleverd) || 0;
   regels[idx].geleverd = String(huidig + 1);
 
-  // UI bijwerken
   const gelInput = document.getElementById('gel_' + idx);
-  if (gelInput) {
-    gelInput.value = regels[idx].geleverd;
-    updateGeleverd(idx);
-  }
+  if (gelInput) { gelInput.value = regels[idx].geleverd; updateGeleverd(idx); }
 
-  // Feedback tonen
   const artikel = regels[idx].omschrijving;
   statusEl.textContent = `✅ ${artikel} → geleverd: ${regels[idx].geleverd}`;
   statusEl.className = 'scanner-status gevonden';
 
-  // Scroll naar artikel in de achtergrond
   const regelEl = document.querySelector(`[data-regel="${idx}"]`);
   if (regelEl) regelEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-  // Na 1.8 sec weer klaar voor volgende scan
   setTimeout(() => {
     if (scannerActief) {
       statusEl.textContent = 'Richt de camera op een EAN-barcode…';
