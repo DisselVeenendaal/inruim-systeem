@@ -442,7 +442,7 @@ function herbouwRegel(i) {
     <td>${r.omschrijving}</td>
     <td style="font-weight:800;color:#1E3A5F;text-align:center">${r.verwacht}</td>
     <td>
-      <input type="number" min="0" class="input-geleverd" id="gel_${i}" placeholder="0" value="${r.geleverd}" oninput="updateGeleverd(${i})">
+      <input type="number" min="0" class="input-geleverd" id="gel_${i}" placeholder="0" value="${r.geleverd}" oninput="updateGeleverd(${i})" onchange="updateGeleverdKlaar(${i})">
       <div class="afwijking-tekst" id="afw_${i}" style="display:${r.geleverd !== '' && Number(r.geleverd) !== r.verwacht ? 'block' : 'none'}">⚠ afwijking</div>
     </td>
     <td>
@@ -527,6 +527,18 @@ function updateSplit(i, j, veld, waarde) {
 function updateGeleverd(i) {
   const val = document.getElementById('gel_' + i).value;
   regels[i].geleverd = val;
+  const el = document.getElementById('gel_' + i);
+  const afw = document.getElementById('afw_' + i);
+  if (afw) {
+    const afwijking = val !== '' && Number(val) !== regels[i].verwacht;
+    el.className = 'input-geleverd' + (val !== '' ? (afwijking ? ' afwijking' : ' ok') : '');
+    afw.style.display = afwijking ? 'block' : 'none';
+  }
+  updateTotalen();
+}
+
+function updateGeleverdKlaar(i) {
+  regels[i].geleverd = document.getElementById('gel_' + i).value;
   herbouwRegel(i);
   updateTotalen();
 }
