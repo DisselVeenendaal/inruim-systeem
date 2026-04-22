@@ -216,9 +216,21 @@
   </div>
 
   <!-- Artikeltabel -->
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-    <div style="font-size:13px;color:#718096;">Vul het geleverde aantal in per artikel, of scan een barcode.</div>
-    <button class="btn-scan" onclick="openScanner()">📷 Scan barcode</button>
+  <div style="margin-bottom:12px;">
+    <div style="font-size:13px;color:#718096;margin-bottom:8px;">Vul het geleverde aantal in per artikel, of scan een barcode met de scanner.</div>
+    <div style="display:flex;gap:10px;align-items:center;background:white;border:2px solid #3182CE;border-radius:10px;padding:10px 14px;box-shadow:0 1px 4px rgba(49,130,206,0.15);">
+      <span style="font-size:20px;">🔍</span>
+      <div style="flex:1;">
+        <div style="font-size:11px;font-weight:700;color:#3182CE;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">Barcode scanner</div>
+        <input type="text" id="eanScanInput" inputmode="numeric" placeholder="Klik hier en scan een barcode…"
+          style="width:100%;border:none;outline:none;font-size:14px;color:#2D3748;background:transparent;font-family:inherit;"
+          oninput="onEanInput(this.value)"
+          onkeydown="if(event.key==='Enter'){onEanEnter();}"
+          autocomplete="off" autocorrect="off" spellcheck="false">
+      </div>
+      <span id="eanScanStatus" style="font-size:18px;min-width:24px;text-align:center;"></span>
+    </div>
+    <div style="font-size:11px;color:#A0AEC0;margin-top:5px;padding-left:4px;">💡 Klik eenmalig op het veld, daarna kun je direct scannen.</div>
   </div>
   <div class="tabel-wrap">
     <table class="tabel">
@@ -309,9 +321,6 @@
   </div>
 </div>
 
-<!-- iOS camera input (verborgen) -->
-<input type="file" id="iosCameraInput" accept="image/*" capture="environment" style="display:none" onchange="verwerkCameraFoto(this.files)">
-
 <!-- BARCODE SCANNER MODAL -->
 <div class="scanner-overlay" id="scannerOverlay">
   <div class="scanner-box">
@@ -321,9 +330,8 @@
       <div class="scanner-lijn"></div>
       <div class="scanner-hoeken"></div>
     </div>
-    <div class="scanner-status" id="scannerStatus">Gereed</div>
-    <div class="scanner-tip">Zorg voor goede belichting en houd de barcode stil</div>
-    <button class="btn-camera" id="btnOpnieuwScan" onclick="document.getElementById('iosCameraInput').click()" style="width:100%;margin-bottom:8px;display:none;">📸 Opnieuw scannen</button>
+    <div class="scanner-status" id="scannerStatus">Camera wordt gestart…</div>
+    <div class="scanner-tip">Houd de barcode stil en zorg voor goede belichting</div>
     <button class="btn-scanner-sluiten" onclick="sluitScanner()">✕ Sluiten</button>
   </div>
 </div>
@@ -669,95 +677,44 @@ function bouwFotoGrid() {
 }
 
 // =====================
-// BARCODE SCANNER
-// iOS: foto via camera input + BarcodeDetector/canvas analyse
-// Android: live video + BarcodeDetector
+// BARCODE SCANNER (BarcodeDetector + ZBar polyfill)
 // =====================
 let scannerActief = false;
 let scannerPauze = false;
 let scannerStream = null;
 let scannerAnimFrame = null;
-let barcodeDetector = null;
-const isIOS = true; // Altijd foto-aanpak gebruiken — werkt op alle apparaten
+let barcodeDetectorInstantie = null;
 
-function openScanner() {
-  // Foto-aanpak via native camera — betrouwbaar op iOS en Android
-  document.getElementById('scannerOverlay').classList.add('actief');
-  scannerActief = true;
-  document.getElementById('scannerStatus').textContent = 'Camera opent zo…';
-  document.getElementById('scannerStatus').className = 'scanner-status';
-  document.getElementById('scannerVideo').style.display = 'none';
-  document.getElementById('btnOpnieuwScan').style.display = 'none';
-  setTimeout(() => document.getElementById('iosCameraInput').click(), 300);
+async function laadBarcodeDetector() {
+  // Als native BarcodeDetector beschikbaar is, gebruik die
+  if ('BarcodeDetector' in window) {
+    return new BarcodeDetector({
+      formats: ['ean_13','ean_8','upc_a','upc_e','code_128','code_39']
+    });
+  }
+  // Anders: laad de polyfill (ZBar WASM)
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.textContent = `
+      import { BarcodeDetectorPolyfill } from 'https://cdn.jsdelivr.net/npm/@undecaf/barcode-detector-polyfill@2.0.0/dist/es/index.js';
+      window.BarcodeDetectorPolyfill = BarcodeDetectorPolyfill;
+      window.dispatchEvent(new Event('polyfillLoaded'));
+    `;
+    document.head.appendChild(script);
+    window.addEventListener('polyfillLoaded', () => {
+      resolve(new window.BarcodeDetectorPolyfill({
+        formats: ['ean_13','ean_8','upc_a','upc_e','code_128','code_39']
+      }));
+    }, { once: true });
+    setTimeout(() => reject(new Error('Polyfill timeout')), 10000);
+  });
 }
 
-// =====================
-// iOS: foto-gebaseerde scan
-// =====================
-async function verwerkCameraFoto(files) {
-  if (!files || files.length === 0) return;
-  const file = files[0];
-  const statusEl = document.getElementById('scannerStatus');
-
-  document.getElementById('scannerOverlay').classList.add('actief');
-  scannerActief = true;
-  scannerPauze = false;
-  statusEl.textContent = 'Barcode analyseren…';
-  statusEl.className = 'scanner-status';
-  document.getElementById('scannerDebug').style.display = 'none';
-
-  // Laad foto in canvas
-  const img = new Image();
-  const url = URL.createObjectURL(file);
-  img.onload = async () => {
-    URL.revokeObjectURL(url);
-
-    if ('BarcodeDetector' in window) {
-      // Gebruik native BarcodeDetector op foto
-      try {
-        const detector = new BarcodeDetector({
-          formats: ['ean_13','ean_8','upc_a','upc_e','code_128','code_39']
-        });
-        const barcodes = await detector.detect(img);
-        if (barcodes.length > 0) {
-          verwerkBarcodeResultaat(barcodes[0].rawValue);
-        } else {
-          statusEl.textContent = '⚠ Geen barcode herkend. Probeer opnieuw met betere belichting.';
-          statusEl.className = 'scanner-status fout';
-        }
-      } catch(e) {
-        statusEl.textContent = '⚠ Fout bij lezen: ' + e.message;
-        statusEl.className = 'scanner-status fout';
-      }
-    } else {
-      // Canvas fallback: meerdere horizontale lijnen scannen
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
-      ctx.drawImage(img, 0, 0);
-      const code = scanCanvasMultiLijn(canvas, ctx);
-      if (code) {
-        verwerkBarcodeResultaat(code);
-      } else {
-        statusEl.textContent = '⚠ Geen barcode herkend. Probeer dichter bij en zorg voor scherpe foto.';
-        statusEl.className = 'scanner-status fout';
-      }
-    }
-  };
-  img.src = url;
-
-  // Reset file input zodat dezelfde foto opnieuw geselecteerd kan worden
-  document.getElementById('iosCameraInput').value = '';
-}
-
-// =====================
-// Android: live video scanner
-// =====================
-async function openLiveScanner() {
+async function openScanner() {
   document.getElementById('scannerOverlay').classList.add('actief');
   const statusEl = document.getElementById('scannerStatus');
-  statusEl.textContent = 'Camera wordt gestart…';
+  statusEl.textContent = 'Scanner laden…';
   statusEl.className = 'scanner-status';
   scannerActief = true;
   scannerPauze = false;
@@ -766,6 +723,11 @@ async function openLiveScanner() {
   video.style.display = 'block';
 
   try {
+    // Laad BarcodeDetector (native of polyfill)
+    statusEl.textContent = 'Camera wordt gestart…';
+    barcodeDetectorInstantie = await laadBarcodeDetector();
+
+    // Start camera
     scannerStream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
       audio: false
@@ -773,200 +735,46 @@ async function openLiveScanner() {
     video.srcObject = scannerStream;
     await video.play();
     statusEl.textContent = 'Richt de camera op een EAN-barcode…';
+    scanFrame(video);
 
-    if ('BarcodeDetector' in window) {
-      barcodeDetector = new BarcodeDetector({
-        formats: ['ean_13','ean_8','upc_a','upc_e','code_128','code_39']
-      });
-      scanLiveFrame(video);
-    } else {
-      // Canvas fallback live
-      scanLiveCanvas(video);
-    }
   } catch(e) {
     let msg = '⚠ ';
-    if (e.name === 'NotAllowedError') msg += 'Cameratoestemming geweigerd.';
-    else msg += e.name + ': ' + e.message;
+    if (e.name === 'NotAllowedError') msg += 'Cameratoestemming geweigerd. Controleer je instellingen.';
+    else if (e.name === 'NotFoundError') msg += 'Geen camera gevonden.';
+    else msg += e.message || e.name;
     statusEl.textContent = msg;
     statusEl.className = 'scanner-status fout';
   }
 }
 
-async function scanLiveFrame(video) {
+async function scanFrame(video) {
   if (!scannerActief) return;
   try {
-    const barcodes = await barcodeDetector.detect(video);
-    if (barcodes.length > 0 && !scannerPauze) verwerkBarcodeResultaat(barcodes[0].rawValue);
-  } catch(e) {}
-  scannerAnimFrame = requestAnimationFrame(() => scanLiveFrame(video));
-}
-
-function scanLiveCanvas(video) {
-  if (!scannerActief) return;
-  if (video.readyState >= 2 && !scannerPauze) {
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const code = scanCanvasMultiLijn(canvas, ctx);
-    if (code) verwerkBarcodeResultaat(code);
-  }
-  scannerAnimFrame = setTimeout(() => scanLiveCanvas(video), 150);
-}
-
-// =====================
-// Canvas EAN scanner - meerdere horizontale lijnen
-// =====================
-function scanCanvasMultiLijn(canvas, ctx) {
-  const w = canvas.width;
-  const h = canvas.height;
-  // Scan op 30%, 40%, 50%, 60%, 70% hoogte
-  const lijnen = [0.30, 0.40, 0.50, 0.60, 0.70];
-  for (const frac of lijnen) {
-    const y = Math.floor(h * frac);
-    const rij = ctx.getImageData(0, y, w, 1).data;
-    const grijs = new Uint8Array(w);
-    for (let x = 0; x < w; x++) {
-      const i = x * 4;
-      grijs[x] = (rij[i] * 77 + rij[i+1] * 150 + rij[i+2] * 29) >> 8;
+    if (video.readyState >= 2 && !scannerPauze) {
+      const barcodes = await barcodeDetectorInstantie.detect(video);
+      if (barcodes.length > 0) {
+        verwerkBarcode(barcodes[0].rawValue);
+      }
     }
-    const code = decodeEANRij(grijs, w);
-    if (code) return code;
-  }
-  return null;
-}
-
-function decodeEANRij(grijs, w) {
-  // Drempelwaarde bepalen
-  let som = 0;
-  for (let x = 0; x < w; x++) som += grijs[x];
-  const drempel = som / w;
-
-  // Runs bepalen
-  const runs = [];
-  let kleur = grijs[0] < drempel ? 0 : 1;
-  let len = 1;
-  for (let x = 1; x < w; x++) {
-    const k = grijs[x] < drempel ? 0 : 1;
-    if (k === kleur) { len++; }
-    else { runs.push([kleur, len]); kleur = k; len = 1; }
-  }
-  runs.push([kleur, len]);
-
-  // Zoek startguard en probeer EAN te lezen
-  for (let i = 0; i < runs.length - 30; i++) {
-    if (runs[i][0] !== 0) continue;
-    const u = runs[i][1];
-    if (u < 1) continue;
-    // Startguard 1:1:1
-    if (!nabij(runs[i+1][1], u) || !nabij(runs[i+2][1], u)) continue;
-
-    // Probeer EAN-8 (3+4+5+4+3 runs)
-    const ean8 = leesEAN8(runs, i+3, u);
-    if (ean8) return ean8;
-
-    // Probeer EAN-13 (3+24+5+24+3 runs)
-    const ean13 = leesEAN13(runs, i+3, u);
-    if (ean13) return ean13;
-  }
-  return null;
-}
-
-function nabij(a, b) { return Math.abs(a/b - 1) < 0.5; }
-function rondeN(v, u) { return Math.max(1, Math.min(4, Math.round(v/u))); }
-
-const EAN_L = [[3,2,1,1],[2,2,2,1],[2,1,2,2],[1,4,1,1],[1,1,3,2],[1,2,3,1],[1,1,1,4],[1,3,1,2],[1,2,1,3],[3,1,1,2]];
-const EAN_R = [[3,2,1,1],[2,2,2,1],[2,1,2,2],[1,4,1,1],[1,1,3,2],[1,2,3,1],[1,1,1,4],[1,3,1,2],[1,2,1,3],[3,1,1,2]];
-const EAN_G = [[1,1,2,3],[1,2,2,2],[2,2,1,2],[1,1,4,1],[2,3,1,1],[1,3,2,1],[4,1,1,1],[2,1,3,1],[3,1,2,1],[2,1,1,3]];
-
-function matchCijfer(r, u, tabel) {
-  const p = [rondeN(r[0],u), rondeN(r[1],u), rondeN(r[2],u), rondeN(r[3],u)];
-  for (let c = 0; c < 10; c++) {
-    if (tabel[c][0]===p[0] && tabel[c][1]===p[1] && tabel[c][2]===p[2] && tabel[c][3]===p[3]) return c;
-  }
-  return -1;
-}
-
-function leesEAN13(runs, pos, u) {
-  if (pos + 55 >= runs.length) return null;
-  const links = []; const rechts = [];
-  const pariteiten = [];
-
-  for (let d = 0; d < 6; d++) {
-    const r = runs.slice(pos + d*4, pos + d*4 + 4).map(r => r[1]);
-    let c = matchCijfer(r, u, EAN_L);
-    if (c >= 0) { pariteiten.push('L'); links.push(c); continue; }
-    c = matchCijfer(r, u, EAN_G);
-    if (c >= 0) { pariteiten.push('G'); links.push(c); continue; }
-    return null;
-  }
-
-  const midPos = pos + 24 + 5;
-  for (let d = 0; d < 6; d++) {
-    const r = runs.slice(midPos + d*4, midPos + d*4 + 4).map(r => r[1]);
-    const c = matchCijfer(r, u, EAN_R);
-    if (c < 0) return null;
-    rechts.push(c);
-  }
-
-  // Bepaal eerste cijfer uit pariteitspatroon
-  const pariteitPatronen = {
-    'LLLLLL':0,'LLGLGG':1,'LLGGLG':2,'LLGGGL':3,'LGLLGG':4,
-    'LGGLLG':5,'LGGGLL':6,'LGLGLG':7,'LGLGGL':8,'LGGLGL':9
-  };
-  const eersteKey = pariteiten.join('');
-  const eerste = pariteitPatronen[eersteKey];
-  if (eerste === undefined) return null;
-
-  const alle = [eerste, ...links, ...rechts];
-  if (!checkEAN(alle)) return null;
-  return alle.join('');
-}
-
-function leesEAN8(runs, pos, u) {
-  if (pos + 35 >= runs.length) return null;
-  const cijfers = [];
-  for (let d = 0; d < 4; d++) {
-    const r = runs.slice(pos + d*4, pos + d*4 + 4).map(r => r[1]);
-    const c = matchCijfer(r, u, EAN_L);
-    if (c < 0) return null;
-    cijfers.push(c);
-  }
-  const midPos = pos + 16 + 5;
-  for (let d = 0; d < 4; d++) {
-    const r = runs.slice(midPos + d*4, midPos + d*4 + 4).map(r => r[1]);
-    const c = matchCijfer(r, u, EAN_R);
-    if (c < 0) return null;
-    cijfers.push(c);
-  }
-  if (!checkEAN(cijfers)) return null;
-  return cijfers.join('');
-}
-
-function checkEAN(cijfers) {
-  const n = cijfers.length;
-  let som = 0;
-  for (let i = 0; i < n - 1; i++) {
-    som += cijfers[i] * ((n % 2 === 0 ? i : i+1) % 2 === 0 ? 1 : 3);
-  }
-  return (10 - (som % 10)) % 10 === cijfers[n-1];
+  } catch(e) {}
+  scannerAnimFrame = requestAnimationFrame(() => scanFrame(video));
 }
 
 function sluitScanner() {
   scannerActief = false;
   document.getElementById('scannerOverlay').classList.remove('actief');
-  document.getElementById('btnOpnieuwScan').style.display = 'none';
-  if (scannerAnimFrame) { cancelAnimationFrame(scannerAnimFrame); clearTimeout(scannerAnimFrame); scannerAnimFrame = null; }
+  if (scannerAnimFrame) { cancelAnimationFrame(scannerAnimFrame); scannerAnimFrame = null; }
   if (scannerStream) { scannerStream.getTracks().forEach(t => t.stop()); scannerStream = null; }
   const video = document.getElementById('scannerVideo');
   video.srcObject = null;
-  barcodeDetector = null;
+  video.pause();
+  barcodeDetectorInstantie = null;
 }
 
-function verwerkBarcodeResultaat(eanGescand) {
-  if (!eanGescand) return;
+function verwerkBarcode(eanGescand) {
+  if (!scannerActief || scannerPauze) return;
   scannerPauze = true;
+
   const statusEl = document.getElementById('scannerStatus');
   const idx = regels.findIndex(r => r.ean && String(r.ean).trim() === String(eanGescand).trim());
 
@@ -975,16 +783,17 @@ function verwerkBarcodeResultaat(eanGescand) {
     statusEl.className = 'scanner-status fout';
     setTimeout(() => {
       if (scannerActief) {
-        statusEl.textContent = isIOS ? 'Tik op "Opnieuw scannen" voor volgende barcode' : 'Richt de camera op een EAN-barcode…';
+        statusEl.textContent = 'Richt de camera op een EAN-barcode…';
         statusEl.className = 'scanner-status';
         scannerPauze = false;
       }
-    }, 2500);
+    }, 2000);
     return;
   }
 
   const huidig = Number(regels[idx].geleverd) || 0;
   regels[idx].geleverd = String(huidig + 1);
+
   const gelInput = document.getElementById('gel_' + idx);
   if (gelInput) { gelInput.value = regels[idx].geleverd; updateGeleverd(idx); }
 
@@ -995,11 +804,9 @@ function verwerkBarcodeResultaat(eanGescand) {
   const regelEl = document.querySelector(`[data-regel="${idx}"]`);
   if (regelEl) regelEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-  if (isIOS) document.getElementById('btnOpnieuwScan').style.display = 'block';
-
   setTimeout(() => {
     if (scannerActief) {
-      statusEl.textContent = isIOS ? 'Tik op "Opnieuw scannen" voor volgende barcode' : 'Richt de camera op een EAN-barcode…';
+      statusEl.textContent = 'Richt de camera op een EAN-barcode…';
       statusEl.className = 'scanner-status';
       scannerPauze = false;
     }
