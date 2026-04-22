@@ -119,6 +119,19 @@
   .btn-medewerker.geselecteerd { border-color: #1E3A5F; background: #1E3A5F; color: white; }
   .header-medewerker { color: rgba(255,255,255,0.8); font-size: 13px; margin-left: auto; }
 
+  /* Historie */
+  .btn-historie { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.4); color: white; border-radius: 6px; padding: 6px 14px; cursor: pointer; font-size: 13px; font-weight: 600; }
+  .btn-historie:hover { background: rgba(255,255,255,0.25); }
+  .historie-order-card { background: white; border-radius: 10px; border: 1px solid #E2E8F0; margin-bottom: 14px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .historie-order-header { background: #1E3A5F; color: white; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .historie-order-nr { font-size: 16px; font-weight: 800; }
+  .historie-order-meta { font-size: 12px; color: rgba(255,255,255,0.75); }
+  .historie-tabel { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .historie-tabel th { background: #F7FAFC; color: #718096; font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 7px 10px; text-align: left; border-bottom: 1px solid #E2E8F0; }
+  .historie-tabel td { padding: 8px 10px; border-bottom: 1px solid #EDF2F7; color: #2D3748; }
+  .historie-tabel tr:last-child td { border-bottom: none; }
+  .historie-leeg { text-align: center; color: #A0AEC0; padding: 40px; font-size: 14px; }
+
   /* Responsive */
   @media (max-width: 600px) {
     .tabel { min-width: 500px; }
@@ -126,7 +139,6 @@
     .btn-primary { width: 100%; }
   }
 </style>
-</head>
 <body>
 
 <div class="header">
@@ -172,6 +184,15 @@
     </div>
     <div class="fout zichtbaar" id="zoekFout" style="display:none"></div>
   </div>
+  <!-- Waarschuwing: eerder bevestigd -->
+  <div id="dubbel-waarschuwing" style="display:none;background:#FFFBEB;border:2px solid #E67E22;border-radius:12px;padding:18px 20px;margin-top:4px;">
+    <div style="font-weight:800;color:#B7530A;font-size:15px;margin-bottom:6px;">⚠️ Dit inkoopnummer is al eerder verwerkt</div>
+    <div id="dubbel-info" style="color:#7D4A0F;font-size:13px;margin-bottom:14px;"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn-groen" style="width:auto;padding:10px 22px;font-size:13px;background:#27AE60;" onclick="gaVerderMet()">✅ Toch opnieuw verwerken</button>
+      <button class="btn-primary" style="background:#718096;" onclick="annuleerDubbel()">Annuleren</button>
+    </div>
+  </div>
 </div>
 
 <!-- SCHERM 2: INVULLEN -->
@@ -184,7 +205,10 @@
         <div class="order-nr-label">Inkoopnummer</div>
         <div class="order-nr" id="toonNummer"></div>
       </div>
-      <span class="badge badge-open"><span class="badge-dot" style="background:#E67E22"></span>Open</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button class="btn-primary" style="background:#7B61FF;font-size:13px;padding:7px 16px;" onclick="toonHistorie()">🕐 Historie</button>
+        <span class="badge badge-open"><span class="badge-dot" style="background:#E67E22"></span>Open</span>
+      </div>
     </div>
     <div class="order-meta">
       <div class="order-meta-item"><span>Leverancier</span><span id="toonLeverancier"></span></div>
@@ -195,13 +219,20 @@
     </div>
   </div>
 
+  <!-- Zoekbalk artikelen -->
+  <div style="background:#1E3A5F;border-radius:12px 12px 0 0;padding:10px 12px;display:flex;align-items:center;gap:10px;">
+    <span style="color:white;font-size:15px;">🔍</span>
+    <input type="text" id="artikelZoek" placeholder="Zoek op Art.nr of Art.lev..." oninput="filterArtikelen()" style="flex:1;border:none;border-radius:6px;padding:7px 12px;font-size:13px;outline:none;color:#2D3748;">
+    <button onclick="document.getElementById('artikelZoek').value='';filterArtikelen();" style="background:rgba(255,255,255,0.2);border:none;color:white;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:13px;font-weight:600;">✕ Wis</button>
+  </div>
+
   <!-- Artikeltabel -->
-  <div class="tabel-wrap">
+  <div class="tabel-wrap" style="border-radius:0 0 12px 12px;">
     <table class="tabel">
       <thead>
         <tr>
           <th>Art.nr</th>
-          <th>Art.lev.</th>
+          <th style="cursor:pointer;user-select:none;" onclick="sorteerOpArtlev()">Art.lev. <span id="sortPijl">↕</span></th>
           <th>Omschrijving</th>
           <th>Opmerking</th>
           <th>Verwacht</th>
@@ -283,6 +314,18 @@
 
     <button class="btn-navy" onclick="gaNaarZoek()">Nieuw inruimdocument verwerken</button>
   </div>
+</div>
+
+<!-- SCHERM 4: HISTORIE -->
+<div class="scherm" id="schermHistorie">
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;">
+    <button class="btn-primary" style="padding:8px 16px;font-size:13px;" onclick="sluitHistorie()">← Terug</button>
+    <div>
+      <h1 style="margin-bottom:0;">🕐 Historie</h1>
+      <p class="subtitel" style="margin-bottom:0;" id="historieSubtitel"></p>
+    </div>
+  </div>
+  <div id="historieInhoud" style="margin-top:20px;"></div>
 </div>
 
 <script>
@@ -603,6 +646,40 @@ function updateLocatie(i) {
   slaOp();
 }
 
+// =====================
+// ZOEKEN & SORTEREN
+// =====================
+let sortRichting = null;
+
+function filterArtikelen() {
+  const zoek = (document.getElementById('artikelZoek').value || '').trim().toLowerCase();
+  const zichtbaar = new Set();
+  regels.forEach((r, i) => {
+    const artnr = r.artnr ? String(r.artnr).toLowerCase() : '';
+    const artikel = r.artikel ? r.artikel.toLowerCase() : '';
+    if (!zoek || artnr.includes(zoek) || artikel.includes(zoek)) zichtbaar.add(String(i));
+  });
+  document.querySelectorAll('#regelsTbody tr[data-regel]').forEach(tr => {
+    tr.style.display = zichtbaar.has(tr.dataset.regel) ? '' : 'none';
+  });
+}
+
+function sorteerOpArtlev() {
+  sortRichting = sortRichting === 'asc' ? 'desc' : 'asc';
+  document.getElementById('sortPijl').textContent = sortRichting === 'asc' ? '↑' : '↓';
+  regels.sort((a, b) => {
+    const va = (a.artikel || '').toLowerCase();
+    const vb = (b.artikel || '').toLowerCase();
+    if (va < vb) return sortRichting === 'asc' ? -1 : 1;
+    if (va > vb) return sortRichting === 'asc' ? 1 : -1;
+    return 0;
+  });
+  const tbody = document.getElementById('regelsTbody');
+  tbody.innerHTML = '';
+  regels.forEach((r, i) => { if (!r.splits) r.splits = []; herbouwRegel(i); });
+  filterArtikelen();
+}
+
 function updateTotalen() {
   const tv = regels.reduce((s, r) => s + r.verwacht, 0);
   const tg = regels.reduce((s, r) => s + (Number(r.geleverd) || 0), 0);
@@ -781,8 +858,132 @@ ${heeftAfwijking ? '<p style="color:#E67E22;font-weight:bold;margin-top:12px;">�
   btn.disabled = false;
 
   localStorage.removeItem('inruim_' + huidigOrder.nummer);
+
+  // Sla op in historie
+  const historieKey = 'inruim_historie';
+  let historie = [];
+  try { historie = JSON.parse(localStorage.getItem(historieKey) || '[]'); } catch(e) {}
+  historie.unshift({
+    nummer: huidigOrder.nummer,
+    leverancier: huidigOrder.leverancier,
+    verkoopnummer: huidigOrder.verkoopnummer,
+    klantreferentie: huidigOrder.klantreferentie,
+    datum: new Date().toLocaleDateString('nl-NL'),
+    tijd: new Date().toLocaleTimeString('nl-NL', {hour:'2-digit',minute:'2-digit'}),
+    medewerker: huidigeMedewerker,
+    regels: regels.map(r => ({
+      artnr: r.artnr,
+      artikel: r.artikel,
+      omschrijving: r.omschrijving,
+      verwacht: r.verwacht,
+      geleverd: r.geleverd,
+      magazijn: r.magazijn,
+      locatie: r.locatie,
+      splits: r.splits || []
+    }))
+  });
+  // Bewaar maximaal 200 entries
+  if (historie.length > 200) historie = historie.slice(0, 200);
+  localStorage.setItem(historieKey, JSON.stringify(historie));
+
   bouwBevestigdScherm(email);
   toonScherm('schermBevestigd');
+}
+
+// =====================
+// HISTORIE
+// =====================
+function toonHistorie() {
+  const num = huidigOrder ? huidigOrder.nummer : null;
+  document.getElementById('historieSubtitel').textContent =
+    num ? 'Eerdere verwerkingen van inkoopnummer ' + num : 'Alle eerdere verwerkingen';
+
+  let historie = [];
+  try { historie = JSON.parse(localStorage.getItem('inruim_historie') || '[]'); } catch(e) {}
+
+  // Filter op huidig inkoopnummer
+  if (num) historie = historie.filter(h => h.nummer === num);
+
+  const div = document.getElementById('historieInhoud');
+  div.innerHTML = '';
+
+  if (historie.length === 0) {
+    div.innerHTML = '<div class="historie-leeg">📭 Geen eerdere verwerkingen gevonden voor inkoopnummer ' + (num || '') + '.</div>';
+  } else {
+    historie.forEach(h => {
+      const card = document.createElement('div');
+      card.className = 'historie-order-card';
+
+      const regelRows = h.regels.map(r => {
+        const afwijking = Number(r.geleverd) !== Number(r.verwacht);
+        if (r.splits && r.splits.length > 0) {
+          const splitRijen = r.splits.map(s =>
+            `<tr style="background:#F0FFF4;">
+              <td style="padding-left:24px;color:#718096;">↳ deel</td>
+              <td></td>
+              <td style="text-align:center;font-weight:700;color:#27AE60;">${s.aantal}</td>
+              <td>Magazijn ${s.magazijn}</td>
+              <td style="font-family:monospace;">${s.locatie}</td>
+            </tr>`
+          ).join('');
+          return `<tr>
+            <td><span style="font-family:monospace;font-size:11px;color:#718096;">${r.artnr ? String(r.artnr).split(',').join('.') : '—'}</span><br><span style="font-family:monospace;font-size:11px;color:#A0AEC0;">${r.artikel}</span></td>
+            <td>${r.omschrijving}</td>
+            <td style="text-align:center;">${r.verwacht}</td>
+            <td style="text-align:center;font-weight:700;color:${afwijking ? '#E67E22' : '#27AE60'};">${r.geleverd}${afwijking ? ' ⚠' : ' ✓'}</td>
+            <td colspan="2" style="color:#718096;font-size:11px;">zie splits</td>
+          </tr>${splitRijen}`;
+        }
+        return `<tr>
+          <td><span style="font-family:monospace;font-size:11px;color:#718096;">${r.artnr ? String(r.artnr).split(',').join('.') : '—'}</span><br><span style="font-family:monospace;font-size:11px;color:#A0AEC0;">${r.artikel}</span></td>
+          <td>${r.omschrijving}</td>
+          <td style="text-align:center;">${r.verwacht}</td>
+          <td style="text-align:center;font-weight:700;color:${afwijking ? '#E67E22' : '#27AE60'};">${r.geleverd}${afwijking ? ' ⚠' : ' ✓'}</td>
+          <td>${r.magazijn ? 'Magazijn ' + r.magazijn : '—'}</td>
+          <td style="font-family:monospace;">${r.locatie || '—'}</td>
+        </tr>`;
+      }).join('');
+
+      card.innerHTML = `
+        <div class="historie-order-header">
+          <div>
+            <div class="historie-order-nr">📦 Inkoopnummer ${h.nummer}</div>
+            <div class="historie-order-meta">${h.leverancier || ''} ${h.verkoopnummer ? '• Verkoop: ' + h.verkoopnummer : ''} ${h.klantreferentie ? '• Ref: ' + h.klantreferentie : ''}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-weight:700;font-size:13px;">${h.datum} om ${h.tijd}</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.75);">👷 ${h.medewerker}</div>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="historie-tabel">
+            <thead>
+              <tr>
+                <th>Art.nr / Art.lev.</th>
+                <th>Omschrijving</th>
+                <th style="text-align:center;">Verwacht</th>
+                <th style="text-align:center;">Geleverd</th>
+                <th>Magazijn</th>
+                <th>Locatie</th>
+              </tr>
+            </thead>
+            <tbody>${regelRows}</tbody>
+          </table>
+        </div>`;
+      div.appendChild(card);
+    });
+  }
+
+  // Sla huidig scherm op zodat we terug kunnen
+  document.getElementById('schermHistorie').dataset.terugScherm = huidigOrder ? 'schermInvullen' : 'schermZoek';
+  document.querySelectorAll('.scherm').forEach(s => s.classList.remove('actief'));
+  document.getElementById('schermHistorie').classList.add('actief');
+  document.getElementById('btnTerug').style.display = 'none';
+}
+
+function sluitHistorie() {
+  const terugScherm = document.getElementById('schermHistorie').dataset.terugScherm || 'schermInvullen';
+  toonScherm(terugScherm);
 }
 
 function bouwBevestigdScherm(email) {
