@@ -950,8 +950,18 @@ function bouwHistorieInhoud(div, historie, num) {
     const verkoopnummer = h.Verkoopnummer || h.verkoopnummer || '';
     const klantreferentie = h.Klantreferentie || h.klantreferentie || '';
     const datum = h.Datum || h.datum || '';
-    const tijd = h.Tijd || h.tijd || '';
     const medewerker = h.Medewerker || h.medewerker || '';
+
+    // Tijd: Excel slaat tijd op als decimaal (bijv. 0.702 = 16:50)
+    // Als het een getal is, omzetten naar HH:MM
+    let tijd = h.Tijd || h.tijd || '';
+    const tijdNum = parseFloat(tijd);
+    if (!isNaN(tijdNum) && tijdNum < 1) {
+      const totalMinuten = Math.round(tijdNum * 24 * 60);
+      const uren = Math.floor(totalMinuten / 60);
+      const minuten = totalMinuten % 60;
+      tijd = String(uren).padStart(2, '0') + ':' + String(minuten).padStart(2, '0');
+    }
 
     // Regels is opgeslagen als JSON string
     let regelsList = [];
