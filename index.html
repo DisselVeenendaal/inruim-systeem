@@ -333,6 +333,8 @@
 // POWER AUTOMATE FLOW URL
 // =====================
 const ZOEK_FLOW_URL = 'https://default44fd0f2e682f48b1b0a49033071749.17.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/e14c5810353b4698b27eadd3ae06a205/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=OISxysFIXa5S2wP_k7eE-s5oHLlZM73-fwL8keg9eEM';
+const HISTORIE_OPSLAAN_URL = 'https://default44fd0f2e682f48b1b0a49033071749.17.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/c7cfe9c7ff3041228e047893b0bd43e8/triggers/manual/paths/invoke?api-version=1';
+const HISTORIE_OPHALEN_URL = 'https://default44fd0f2e682f48b1b0a49033071749.17.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/6b4f303722fb4b159d68634a2193f697/triggers/manual/paths/invoke?api-version=1';
 
 let huidigOrder = null;
 let regels = [];
@@ -859,32 +861,34 @@ ${heeftAfwijking ? '<p style="color:#E67E22;font-weight:bold;margin-top:12px;">�
 
   localStorage.removeItem('inruim_' + huidigOrder.nummer);
 
-  // Sla op in historie
-  const historieKey = 'inruim_historie';
-  let historie = [];
-  try { historie = JSON.parse(localStorage.getItem(historieKey) || '[]'); } catch(e) {}
-  historie.unshift({
-    nummer: huidigOrder.nummer,
-    leverancier: huidigOrder.leverancier,
-    verkoopnummer: huidigOrder.verkoopnummer,
-    klantreferentie: huidigOrder.klantreferentie,
-    datum: new Date().toLocaleDateString('nl-NL'),
-    tijd: new Date().toLocaleTimeString('nl-NL', {hour:'2-digit',minute:'2-digit'}),
-    medewerker: huidigeMedewerker,
-    regels: regels.map(r => ({
-      artnr: r.artnr,
-      artikel: r.artikel,
-      omschrijving: r.omschrijving,
-      verwacht: r.verwacht,
-      geleverd: r.geleverd,
-      magazijn: r.magazijn,
-      locatie: r.locatie,
-      splits: r.splits || []
-    }))
-  });
-  // Bewaar maximaal 200 entries
-  if (historie.length > 200) historie = historie.slice(0, 200);
-  localStorage.setItem(historieKey, JSON.stringify(historie));
+  // Sla op in Power Automate / Excel
+  try {
+    await fetch(HISTORIE_OPSLAAN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        inkoopnummer: huidigOrder.nummer,
+        leverancier: huidigOrder.leverancier,
+        verkoopnummer: huidigOrder.verkoopnummer,
+        klantreferentie: huidigOrder.klantreferentie,
+        datum: new Date().toLocaleDateString('nl-NL'),
+        tijd: new Date().toLocaleTimeString('nl-NL', {hour:'2-digit', minute:'2-digit'}),
+        medewerker: huidigeMedewerker,
+        regels: regels.map(r => ({
+          artnr: r.artnr,
+          artikel: r.artikel,
+          omschrijving: r.omschrijving,
+          verwacht: r.verwacht,
+          geleverd: r.geleverd,
+          magazijn: r.magazijn,
+          locatie: r.locatie,
+          splits: r.splits || []
+        }))
+      })
+    });
+  } catch(e) {
+    console.log('Historie opslaan mislukt:', e);
+  }
 
   bouwBevestigdScherm(email);
   toonScherm('schermBevestigd');
@@ -898,87 +902,125 @@ function toonHistorie() {
   document.getElementById('historieSubtitel').textContent =
     num ? 'Eerdere verwerkingen van inkoopnummer ' + num : 'Alle eerdere verwerkingen';
 
-  let historie = [];
-  try { historie = JSON.parse(localStorage.getItem('inruim_historie') || '[]'); } catch(e) {}
-
-  // Filter op huidig inkoopnummer
-  if (num) historie = historie.filter(h => h.nummer === num);
-
   const div = document.getElementById('historieInhoud');
+  div.innerHTML = '<div class="historie-leeg">⏳ Historie ophalen...</div>';
+
+  // Schakel naar het historiescherm
+  document.getElementById('schermHistorie').dataset.terugScherm = huidigOrder ? 'schermInvullen' : 'schermZoek';
+  document.querySelectorAll('.scherm').forEach(s => s.classList.remove('actief'));
+  document.getElementById('schermHistorie').classList.add('actief');
+  document.getElementById('btnTerug').style.display = 'none';
+
+  // Haal op uit Power Automate
+  fetch(HISTORIE_OPHALEN_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ inkoopnummer: num || '' })
+  })
+  .then(r => r.json())
+  .then(data => {
+    // Filter op inkoopnummer (want we hebben geen filterquery in de flow)
+    let historie = Array.isArray(data) ? data : (data.value || []);
+    if (num) historie = historie.filter(h => String(h.Inkoopnummer) === String(num));
+    // Nieuwste eerst
+    historie.sort((a, b) => {
+      const da = (a.Datum || '') + (a.Tijd || '');
+      const db = (b.Datum || '') + (b.Tijd || '');
+      return db.localeCompare(da);
+    });
+    bouwHistorieInhoud(div, historie, num);
+  })
+  .catch(e => {
+    div.innerHTML = '<div class="historie-leeg">⚠️ Kon de historie niet ophalen. Controleer de verbinding.</div>';
+  });
+}
+
+function bouwHistorieInhoud(div, historie, num) {
   div.innerHTML = '';
 
   if (historie.length === 0) {
     div.innerHTML = '<div class="historie-leeg">📭 Geen eerdere verwerkingen gevonden voor inkoopnummer ' + (num || '') + '.</div>';
-  } else {
-    historie.forEach(h => {
-      const card = document.createElement('div');
-      card.className = 'historie-order-card';
+    return;
+  }
 
-      const regelRows = h.regels.map(r => {
-        const afwijking = Number(r.geleverd) !== Number(r.verwacht);
-        if (r.splits && r.splits.length > 0) {
-          const splitRijen = r.splits.map(s =>
-            `<tr style="background:#F0FFF4;">
-              <td style="padding-left:24px;color:#718096;">↳ deel</td>
-              <td></td>
-              <td style="text-align:center;font-weight:700;color:#27AE60;">${s.aantal}</td>
-              <td>Magazijn ${s.magazijn}</td>
-              <td style="font-family:monospace;">${s.locatie}</td>
-            </tr>`
-          ).join('');
-          return `<tr>
-            <td><span style="font-family:monospace;font-size:11px;color:#718096;">${r.artnr ? String(r.artnr).split(',').join('.') : '—'}</span><br><span style="font-family:monospace;font-size:11px;color:#A0AEC0;">${r.artikel}</span></td>
-            <td>${r.omschrijving}</td>
-            <td style="text-align:center;">${r.verwacht}</td>
-            <td style="text-align:center;font-weight:700;color:${afwijking ? '#E67E22' : '#27AE60'};">${r.geleverd}${afwijking ? ' ⚠' : ' ✓'}</td>
-            <td colspan="2" style="color:#718096;font-size:11px;">zie splits</td>
-          </tr>${splitRijen}`;
-        }
+  historie.forEach(h => {
+    // Excel geeft hoofdletter kolomnamen terug
+    const inkoopnummer = h.Inkoopnummer || h.inkoopnummer || '';
+    const leverancier = h.Leverancier || h.leverancier || '';
+    const verkoopnummer = h.Verkoopnummer || h.verkoopnummer || '';
+    const klantreferentie = h.Klantreferentie || h.klantreferentie || '';
+    const datum = h.Datum || h.datum || '';
+    const tijd = h.Tijd || h.tijd || '';
+    const medewerker = h.Medewerker || h.medewerker || '';
+
+    // Regels is opgeslagen als JSON string
+    let regelsList = [];
+    try {
+      const raw = h.Regels || h.regels || '[]';
+      regelsList = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    } catch(e) {}
+
+    const card = document.createElement('div');
+    card.className = 'historie-order-card';
+
+    const regelRows = regelsList.map(r => {
+      const afwijking = Number(r.geleverd) !== Number(r.verwacht);
+      if (r.splits && r.splits.length > 0) {
+        const splitRijen = r.splits.map(s =>
+          `<tr style="background:#F0FFF4;">
+            <td style="padding-left:24px;color:#718096;">↳ deel</td>
+            <td></td>
+            <td style="text-align:center;font-weight:700;color:#27AE60;">${s.aantal}</td>
+            <td>Magazijn ${s.magazijn}</td>
+            <td style="font-family:monospace;">${s.locatie}</td>
+          </tr>`
+        ).join('');
         return `<tr>
           <td><span style="font-family:monospace;font-size:11px;color:#718096;">${r.artnr ? String(r.artnr).split(',').join('.') : '—'}</span><br><span style="font-family:monospace;font-size:11px;color:#A0AEC0;">${r.artikel}</span></td>
           <td>${r.omschrijving}</td>
           <td style="text-align:center;">${r.verwacht}</td>
           <td style="text-align:center;font-weight:700;color:${afwijking ? '#E67E22' : '#27AE60'};">${r.geleverd}${afwijking ? ' ⚠' : ' ✓'}</td>
-          <td>${r.magazijn ? 'Magazijn ' + r.magazijn : '—'}</td>
-          <td style="font-family:monospace;">${r.locatie || '—'}</td>
-        </tr>`;
-      }).join('');
+          <td colspan="2" style="color:#718096;font-size:11px;">zie splits</td>
+        </tr>${splitRijen}`;
+      }
+      return `<tr>
+        <td><span style="font-family:monospace;font-size:11px;color:#718096;">${r.artnr ? String(r.artnr).split(',').join('.') : '—'}</span><br><span style="font-family:monospace;font-size:11px;color:#A0AEC0;">${r.artikel}</span></td>
+        <td>${r.omschrijving}</td>
+        <td style="text-align:center;">${r.verwacht}</td>
+        <td style="text-align:center;font-weight:700;color:${afwijking ? '#E67E22' : '#27AE60'};">${r.geleverd}${afwijking ? ' ⚠' : ' ✓'}</td>
+        <td>${r.magazijn ? 'Magazijn ' + r.magazijn : '—'}</td>
+        <td style="font-family:monospace;">${r.locatie || '—'}</td>
+      </tr>`;
+    }).join('');
 
-      card.innerHTML = `
-        <div class="historie-order-header">
-          <div>
-            <div class="historie-order-nr">📦 Inkoopnummer ${h.nummer}</div>
-            <div class="historie-order-meta">${h.leverancier || ''} ${h.verkoopnummer ? '• Verkoop: ' + h.verkoopnummer : ''} ${h.klantreferentie ? '• Ref: ' + h.klantreferentie : ''}</div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-weight:700;font-size:13px;">${h.datum} om ${h.tijd}</div>
-            <div style="font-size:12px;color:rgba(255,255,255,0.75);">👷 ${h.medewerker}</div>
-          </div>
+    card.innerHTML = `
+      <div class="historie-order-header">
+        <div>
+          <div class="historie-order-nr">📦 Inkoopnummer ${inkoopnummer}</div>
+          <div class="historie-order-meta">${leverancier} ${verkoopnummer ? '• Verkoop: ' + verkoopnummer : ''} ${klantreferentie ? '• Ref: ' + klantreferentie : ''}</div>
         </div>
-        <div style="overflow-x:auto;">
-          <table class="historie-tabel">
-            <thead>
-              <tr>
-                <th>Art.nr / Art.lev.</th>
-                <th>Omschrijving</th>
-                <th style="text-align:center;">Verwacht</th>
-                <th style="text-align:center;">Geleverd</th>
-                <th>Magazijn</th>
-                <th>Locatie</th>
-              </tr>
-            </thead>
-            <tbody>${regelRows}</tbody>
-          </table>
-        </div>`;
-      div.appendChild(card);
-    });
-  }
-
-  // Sla huidig scherm op zodat we terug kunnen
-  document.getElementById('schermHistorie').dataset.terugScherm = huidigOrder ? 'schermInvullen' : 'schermZoek';
-  document.querySelectorAll('.scherm').forEach(s => s.classList.remove('actief'));
-  document.getElementById('schermHistorie').classList.add('actief');
-  document.getElementById('btnTerug').style.display = 'none';
+        <div style="text-align:right;">
+          <div style="font-weight:700;font-size:13px;">${datum} om ${tijd}</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.75);">👷 ${medewerker}</div>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="historie-tabel">
+          <thead>
+            <tr>
+              <th>Art.nr / Art.lev.</th>
+              <th>Omschrijving</th>
+              <th style="text-align:center;">Verwacht</th>
+              <th style="text-align:center;">Geleverd</th>
+              <th>Magazijn</th>
+              <th>Locatie</th>
+            </tr>
+          </thead>
+          <tbody>${regelRows}</tbody>
+        </table>
+      </div>`;
+    div.appendChild(card);
+  });
 }
 
 function sluitHistorie() {
