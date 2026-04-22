@@ -195,8 +195,21 @@
     </div>
   </div>
 
+  <!-- Zoekbalk artikelen -->
+  <div style="background:#1E3A5F;border-radius:10px 10px 0 0;padding:10px 14px;display:flex;align-items:center;gap:10px;">
+    <span style="color:rgba(255,255,255,0.7);font-size:13px;white-space:nowrap;">🔍</span>
+    <input type="text" id="artikelZoek" placeholder="Zoek op Art.nr of Art.lev..." oninput="filterArtikelen(this.value)"
+      style="flex:1;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:6px;padding:7px 12px;color:white;font-size:13px;outline:none;font-family:inherit;"
+      onfocus="this.style.borderColor='rgba(99,179,237,0.8)'" onblur="this.style.borderColor='rgba(255,255,255,0.25)'">
+    <button onclick="filterArtikelen('');document.getElementById('artikelZoek').value=''"
+      style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:white;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:12px;white-space:nowrap;">
+      ✕ Wis
+    </button>
+    <span id="zoekResultaat" style="color:rgba(255,255,255,0.6);font-size:12px;white-space:nowrap;"></span>
+  </div>
+
   <!-- Artikeltabel -->
-  <div class="tabel-wrap">
+  <div class="tabel-wrap" style="border-radius:0 0 12px 12px;">
     <table class="tabel">
       <thead>
         <tr>
@@ -389,6 +402,11 @@ async function zoekOrder() {
     }));
 
     fotos = [];
+    zoekTerm = '';
+    const zoekInput = document.getElementById('artikelZoek');
+    if (zoekInput) { zoekInput.value = ''; }
+    const zoekRes = document.getElementById('zoekResultaat');
+    if (zoekRes) zoekRes.textContent = '';
     bouwInvulScherm();
     toonScherm('schermInvullen');
 
@@ -746,6 +764,47 @@ ${document.getElementById('opmerking').value ? `<p style="margin-top:12px;backgr
 // =====================
 // SORTEREN OP ART.LEV.
 // =====================
+// =====================
+// ZOEKEN IN ARTIKELEN
+// =====================
+let zoekTerm = '';
+
+function filterArtikelen(term) {
+  zoekTerm = term.trim().toLowerCase();
+  const tbody = document.getElementById('regelsTbody');
+  const resultaatEl = document.getElementById('zoekResultaat');
+
+  // Alle rijen verbergen/tonen op basis van zoekterm
+  const alleRijen = tbody.querySelectorAll('tr');
+  
+  if (!zoekTerm) {
+    // Geen zoekterm: alles tonen
+    alleRijen.forEach(tr => tr.style.display = '');
+    resultaatEl.textContent = '';
+    return;
+  }
+
+  // Per regel (index) bijhouden of hij matcht
+  const matchende = new Set();
+  regels.forEach((r, i) => {
+    const artnr = String(r.artnr || '').toLowerCase();
+    const artikel = String(r.artikel || '').toLowerCase();
+    const omschrijving = String(r.omschrijving || '').toLowerCase();
+    if (artnr.includes(zoekTerm) || artikel.includes(zoekTerm) || omschrijving.includes(zoekTerm)) {
+      matchende.add(String(i));
+    }
+  });
+
+  // Rijen tonen/verbergen
+  alleRijen.forEach(tr => {
+    const regelIdx = tr.dataset.regel;
+    tr.style.display = matchende.has(regelIdx) ? '' : 'none';
+  });
+
+  const aantal = matchende.size;
+  resultaatEl.textContent = aantal === 0 ? 'Geen resultaten' : `${aantal} van ${regels.length}`;
+}
+
 let sortArtlevRichting = null;
 
 function sorteerOpArtlev() {
