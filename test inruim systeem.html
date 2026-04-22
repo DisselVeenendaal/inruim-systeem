@@ -216,21 +216,9 @@
   </div>
 
   <!-- Artikeltabel -->
-  <div style="margin-bottom:12px;">
-    <div style="font-size:13px;color:#718096;margin-bottom:8px;">Vul het geleverde aantal in per artikel, of scan een barcode met de scanner.</div>
-    <div style="display:flex;gap:10px;align-items:center;background:white;border:2px solid #3182CE;border-radius:10px;padding:10px 14px;box-shadow:0 1px 4px rgba(49,130,206,0.15);">
-      <span style="font-size:20px;">🔍</span>
-      <div style="flex:1;">
-        <div style="font-size:11px;font-weight:700;color:#3182CE;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">Barcode scanner</div>
-        <input type="text" id="eanScanInput" inputmode="numeric" placeholder="Klik hier en scan een barcode…"
-          style="width:100%;border:none;outline:none;font-size:14px;color:#2D3748;background:transparent;font-family:inherit;"
-          oninput="onEanInput(this.value)"
-          onkeydown="if(event.key==='Enter'){onEanEnter();}"
-          autocomplete="off" autocorrect="off" spellcheck="false">
-      </div>
-      <span id="eanScanStatus" style="font-size:18px;min-width:24px;text-align:center;"></span>
-    </div>
-    <div style="font-size:11px;color:#A0AEC0;margin-top:5px;padding-left:4px;">💡 Klik eenmalig op het veld, daarna kun je direct scannen.</div>
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+    <div style="font-size:13px;color:#718096;">Vul het geleverde aantal in per artikel, of scan een barcode.</div>
+    <button class="btn-scan" onclick="openScanner()">📷 Scan barcode</button>
   </div>
   <div class="tabel-wrap">
     <table class="tabel">
