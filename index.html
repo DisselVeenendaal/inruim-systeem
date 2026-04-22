@@ -773,7 +773,13 @@ function sorteerOpArtlev() {
       : waardeB.localeCompare(waardeA);
   });
 
-  bouwTabel();
+  const tbody = document.getElementById('regelsTbody');
+  tbody.innerHTML = '';
+  regels.forEach((r, i) => {
+    if (!r.splits) r.splits = [];
+    herbouwRegel(i);
+  });
+  updateTotalen();
 }
 
 function bouwBevestigdScherm(email) {
