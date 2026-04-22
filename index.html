@@ -201,7 +201,7 @@
       <thead>
         <tr>
           <th>Art.nr</th>
-          <th>Art.lev.</th>
+          <th style="cursor:pointer;user-select:none;" onclick="sorteerOpArtlev()" title="Klik om te sorteren">Art.lev. <span id="sortPijlArtlev" style="opacity:0.5;font-size:11px;">↕</span></th>
           <th>Omschrijving</th>
           <th>Opmerking</th>
           <th>Verwacht</th>
@@ -741,6 +741,39 @@ ${document.getElementById('opmerking').value ? `<p style="margin-top:12px;backgr
 
   bouwBevestigdScherm(email);
   toonScherm('schermBevestigd');
+}
+
+// =====================
+// SORTEREN OP ART.LEV.
+// =====================
+let sortArtlevRichting = null;
+
+function sorteerOpArtlev() {
+  if (sortArtlevRichting === null || sortArtlevRichting === 'desc') {
+    sortArtlevRichting = 'asc';
+  } else {
+    sortArtlevRichting = 'desc';
+  }
+
+  const pijl = document.getElementById('sortPijlArtlev');
+  pijl.textContent = sortArtlevRichting === 'asc' ? '↑' : '↓';
+  pijl.style.opacity = '1';
+  pijl.style.color = '#63B3ED';
+
+  regels.sort((a, b) => {
+    const waardeA = String(a.artikel || '').trim();
+    const waardeB = String(b.artikel || '').trim();
+    const numA = parseFloat(waardeA);
+    const numB = parseFloat(waardeB);
+    if (!isNaN(numA) && !isNaN(numB)) {
+      return sortArtlevRichting === 'asc' ? numA - numB : numB - numA;
+    }
+    return sortArtlevRichting === 'asc'
+      ? waardeA.localeCompare(waardeB)
+      : waardeB.localeCompare(waardeA);
+  });
+
+  bouwTabel();
 }
 
 function bouwBevestigdScherm(email) {
