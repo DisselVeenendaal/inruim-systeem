@@ -708,6 +708,7 @@ async function bevestig() {
 
 </table>
 ${heeftAfwijking ? '<p style="color:#E67E22;font-weight:bold;margin-top:12px;">⚠ Let op: er zijn afwijkingen tussen verwacht en geleverd aantal.</p>' : ''}
+${document.getElementById('opmerking').value ? `<p style="margin-top:12px;background:#FFFAF0;border:1px solid #E67E22;border-radius:6px;padding:10px 14px;font-size:13px;font-family:Arial,sans-serif;"><strong>📝 Opmerking:</strong> ${document.getElementById('opmerking').value}</p>` : ''}
 <p style="margin-top:16px;color:#718096;font-size:12px;">✅ Gecontroleerd en ingeruimd door: <strong>${huidigeMedewerker}</strong></p>
 `;
 
