@@ -778,6 +778,7 @@ async function bevestig() {
   // Power Automate koppeling — HTML tabel voor e-mail
   const heeftAfwijking = regels.some(r => Number(r.geleverd) !== r.verwacht);
   const regelsTekst = `
+${document.getElementById('opmerking').value.trim() ? `<div style="margin-bottom:16px;padding:14px 18px;background:#FFFBEB;border-left:4px solid #F6AD55;font-family:Arial,sans-serif;font-size:14px;"><strong style="color:#92400E;font-size:15px;">📝 Opmerking medewerker:</strong><br><span style="color:#78350F;font-size:14px;">${document.getElementById('opmerking').value.trim()}</span></div>` : ''}
 <table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:13px;">
   <thead>
     <tr style="background:#1E3A5F;color:white;">
@@ -829,7 +830,6 @@ async function bevestig() {
 
 </table>
 ${heeftAfwijking ? '<p style="color:#E67E22;font-weight:bold;margin-top:12px;">⚠ Let op: er zijn afwijkingen tussen verwacht en geleverd aantal.</p>' : ''}
-${document.getElementById('opmerking').value.trim() ? `<div style="margin-top:16px;padding:12px 16px;background:#FFFBEB;border:1px solid #F6AD55;border-radius:6px;font-family:Arial,sans-serif;font-size:13px;"><strong style="color:#92400E;">📝 Opmerking medewerker:</strong><br><span style="color:#78350F;">${document.getElementById('opmerking').value.trim()}</span></div>` : ''}
 <p style="margin-top:16px;color:#718096;font-size:12px;">✅ Gecontroleerd en ingeruimd door: <strong>${huidigeMedewerker}</strong></p>
 `;
 
