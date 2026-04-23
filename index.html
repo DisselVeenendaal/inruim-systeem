@@ -829,6 +829,7 @@ async function bevestig() {
 
 </table>
 ${heeftAfwijking ? '<p style="color:#E67E22;font-weight:bold;margin-top:12px;">⚠ Let op: er zijn afwijkingen tussen verwacht en geleverd aantal.</p>' : ''}
+${document.getElementById('opmerking').value.trim() ? `<div style="margin-top:16px;padding:12px 16px;background:#FFFBEB;border:1px solid #F6AD55;border-radius:6px;font-family:Arial,sans-serif;font-size:13px;"><strong style="color:#92400E;">📝 Opmerking medewerker:</strong><br><span style="color:#78350F;">${document.getElementById('opmerking').value.trim()}</span></div>` : ''}
 <p style="margin-top:16px;color:#718096;font-size:12px;">✅ Gecontroleerd en ingeruimd door: <strong>${huidigeMedewerker}</strong></p>
 `;
 
@@ -878,6 +879,7 @@ ${heeftAfwijking ? '<p style="color:#E67E22;font-weight:bold;margin-top:12px;">�
           artnr: r.artnr,
           artikel: r.artikel,
           omschrijving: r.omschrijving,
+          opmerking: r.opmerking || '',
           verwacht: r.verwacht,
           geleverd: r.geleverd,
           magazijn: r.magazijn,
@@ -988,6 +990,7 @@ function bouwHistorieInhoud(div, historie, num) {
         return `<tr>
           <td><span style="font-family:monospace;font-size:11px;color:#718096;">${r.artnr ? String(r.artnr).split(',').join('.') : '—'}</span><br><span style="font-family:monospace;font-size:11px;color:#A0AEC0;">${r.artikel}</span></td>
           <td>${r.omschrijving}</td>
+          <td style="font-size:11px;color:#718096;">${r.opmerking || ''}</td>
           <td style="text-align:center;">${r.verwacht}</td>
           <td style="text-align:center;font-weight:700;color:${afwijking ? '#E67E22' : '#27AE60'};">${r.geleverd}${afwijking ? ' ⚠' : ' ✓'}</td>
           <td colspan="2" style="color:#718096;font-size:11px;">zie splits</td>
@@ -996,6 +999,7 @@ function bouwHistorieInhoud(div, historie, num) {
       return `<tr>
         <td><span style="font-family:monospace;font-size:11px;color:#718096;">${r.artnr ? String(r.artnr).split(',').join('.') : '—'}</span><br><span style="font-family:monospace;font-size:11px;color:#A0AEC0;">${r.artikel}</span></td>
         <td>${r.omschrijving}</td>
+        <td style="font-size:11px;color:#718096;">${r.opmerking || ''}</td>
         <td style="text-align:center;">${r.verwacht}</td>
         <td style="text-align:center;font-weight:700;color:${afwijking ? '#E67E22' : '#27AE60'};">${r.geleverd}${afwijking ? ' ⚠' : ' ✓'}</td>
         <td>${r.magazijn ? 'Magazijn ' + r.magazijn : '—'}</td>
@@ -1020,6 +1024,7 @@ function bouwHistorieInhoud(div, historie, num) {
             <tr>
               <th>Art.nr / Art.lev.</th>
               <th>Omschrijving</th>
+              <th>Opmerking</th>
               <th style="text-align:center;">Verwacht</th>
               <th style="text-align:center;">Geleverd</th>
               <th>Magazijn</th>
