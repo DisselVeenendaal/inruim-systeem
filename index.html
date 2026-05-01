@@ -623,6 +623,10 @@ async function zoekOrder() {
     bouwInvulScherm();
     toonScherm('schermInvullen');
 
+    // Reset snelle invoer
+    document.getElementById('allesMagazijn').value = '';
+    document.getElementById('allesLocatie').value = '';
+
   } catch(e) {
     fout.textContent = '⚠ Verbindingsfout. Probeer het opnieuw.';
     fout.style.display = 'block';
