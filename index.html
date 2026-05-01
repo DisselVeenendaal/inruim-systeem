@@ -444,7 +444,6 @@ function allesCompleetInvullen() {
   const locatie = document.getElementById('allesLocatie').value.trim();
 
   if (!magazijn) { alert('Kies eerst een magazijn.'); return; }
-  if (!locatie) { alert('Vul eerst een locatie in.'); return; }
 
   regels.forEach((r, i) => {
     r.geleverd = r.verwacht;
