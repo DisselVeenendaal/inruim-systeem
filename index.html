@@ -132,6 +132,34 @@
   .historie-tabel tr:last-child td { border-bottom: none; }
   .historie-leeg { text-align: center; color: #A0AEC0; padding: 40px; font-size: 14px; }
 
+  /* Alles compleet balk */
+  .alles-compleet-balk {
+    background: #F0FFF4;
+    border: 2px solid #27AE60;
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .alles-compleet-balk label { margin: 0; font-size: 13px; white-space: nowrap; }
+  .alles-compleet-balk select, .alles-compleet-balk input[type=text] {
+    border: 2px solid #27AE60; border-radius: 6px; padding: 6px 8px; font-size: 13px;
+    outline: none; color: #2D3748; width: auto;
+  }
+  .btn-alles-compleet {
+    background: #27AE60; color: white; border: none; border-radius: 8px;
+    padding: 8px 18px; font-weight: 800; font-size: 13px; cursor: pointer; white-space: nowrap;
+  }
+  .btn-alles-compleet:hover { background: #219150; }
+  .btn-alles-wis {
+    background: white; color: #E53E3E; border: 2px solid #E53E3E; border-radius: 8px;
+    padding: 6px 14px; font-weight: 700; font-size: 12px; cursor: pointer; white-space: nowrap;
+  }
+  .btn-alles-wis:hover { background: #FFF5F5; }
+
   /* Responsive */
   @media (max-width: 600px) {
     .tabel { min-width: 500px; }
@@ -217,6 +245,24 @@
       <div class="order-meta-item"><span>Verkoopnummer</span><span id="toonVerkoopnummer"></span></div>
       <div class="order-meta-item"><span>Klantreferentie</span><span id="toonKlantreferentie"></span></div>
     </div>
+  </div>
+
+  <!-- Alles compleet balk -->
+  <div class="alles-compleet-balk">
+    <span style="font-weight:800;color:#27AE60;font-size:14px;">✅ Alles compleet?</span>
+    <label>Magazijn:</label>
+    <select id="allesMagazijn">
+      <option value="">— kies —</option>
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5">5</option>
+    </select>
+    <label>Locatie:</label>
+    <input type="text" id="allesLocatie" placeholder="Bijv. A-01-01" style="width:110px;">
+    <button class="btn-alles-compleet" onclick="allesCompleetInvullen()">⚡ Alles invullen</button>
+    <button class="btn-alles-wis" onclick="allesWissen()">✕ Wis alles</button>
   </div>
 
   <!-- Zoekbalk artikelen -->
@@ -390,6 +436,77 @@ window.addEventListener('beforeunload', e => {
     e.returnValue = '';
   }
 });
+// =====================
+// ALLES COMPLEET INVULLEN
+// =====================
+function allesCompleetInvullen() {
+  const magazijn = document.getElementById('allesMagazijn').value;
+  const locatie = document.getElementById('allesLocatie').value.trim();
+
+  if (!magazijn) { alert('Kies eerst een magazijn.'); return; }
+  if (!locatie) { alert('Vul eerst een locatie in.'); return; }
+
+  regels.forEach((r, i) => {
+    r.geleverd = r.verwacht;
+    r.magazijn = magazijn;
+    r.locatie = locatie;
+  });
+
+  // Alle input-velden in de tabel bijwerken
+  document.querySelectorAll('.input-geleverd').forEach((inp, i) => {
+    if (regels[i] !== undefined) {
+      inp.value = regels[i].verwacht;
+      inp.className = 'input-geleverd ok';
+    }
+  });
+  document.querySelectorAll('.magazijn-select').forEach((sel, i) => {
+    if (regels[i] !== undefined) {
+      sel.value = magazijn;
+      sel.className = 'magazijn-select ok';
+    }
+  });
+  document.querySelectorAll('.input-locatie').forEach((inp, i) => {
+    if (regels[i] !== undefined) {
+      inp.value = locatie;
+      inp.className = 'input-locatie ok';
+    }
+  });
+  document.querySelectorAll('.afwijking-tekst').forEach(el => el.textContent = '');
+
+  updateTotaal();
+  slaOp();
+}
+
+function allesWissen() {
+  if (!confirm('Weet je zeker dat je alle ingevulde aantallen, magazijnen en locaties wilt wissen?')) return;
+
+  regels.forEach(r => {
+    r.geleverd = '';
+    r.magazijn = '';
+    r.locatie = '';
+  });
+
+  document.querySelectorAll('.input-geleverd').forEach(inp => {
+    inp.value = '';
+    inp.className = 'input-geleverd';
+  });
+  document.querySelectorAll('.magazijn-select').forEach(sel => {
+    sel.value = '';
+    sel.className = 'magazijn-select';
+  });
+  document.querySelectorAll('.input-locatie').forEach(inp => {
+    inp.value = '';
+    inp.className = 'input-locatie';
+  });
+  document.querySelectorAll('.afwijking-tekst').forEach(el => el.textContent = '');
+
+  document.getElementById('allesMagazijn').value = '';
+  document.getElementById('allesLocatie').value = '';
+
+  updateTotaal();
+  slaOp();
+}
+
 function slaOp() {
   if (!huidigOrder) return;
   const data = {
