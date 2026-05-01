@@ -6,165 +6,179 @@
 <title>Dissel BV Inruim Systeem</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #F7FAFC; min-height: 100vh; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0F1923; min-height: 100vh; color: #E2E8F0; }
 
   /* Header */
-  .header { background: #1E3A5F; height: 60px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
-  .header-logo { width: 32px; height: 32px; background: #3182CE; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
-  .header-title { color: white; font-weight: 700; font-size: 17px; margin-left: 12px; }
+  .header { background: #0F1923; border-bottom: 1px solid rgba(255,255,255,0.08); height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+  .header-title { color: white; font-weight: 700; font-size: 16px; margin-left: 12px; }
   .header-left { display: flex; align-items: center; }
-  .btn-terug { background: transparent; border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 6px; padding: 6px 14px; cursor: pointer; font-size: 13px; display: none; }
+  .btn-terug { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: white; border-radius: 8px; padding: 6px 14px; cursor: pointer; font-size: 13px; display: none; }
+  .btn-terug:hover { background: rgba(255,255,255,0.15); }
+  .header-medewerker { color: rgba(255,255,255,0.6); font-size: 13px; }
 
   /* Schermen */
-  .scherm { display: none; max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+  .scherm { display: none; padding: 20px 16px; max-width: 1200px; margin: 0 auto; }
   .scherm.actief { display: block; }
+  #schermInvullen.actief { display: block; }
 
-  /* Zoekscherm */
-  .card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); border: 1px solid #E2E8F0; margin-bottom: 16px; }
-  h1 { color: #1E3A5F; font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  /* Zoek- en login scherm */
+  .card { background: #1A2535; border-radius: 14px; padding: 24px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 16px; }
+  h1 { color: #E2E8F0; font-size: 22px; font-weight: 700; margin-bottom: 6px; }
   .subtitel { color: #718096; font-size: 14px; margin-bottom: 24px; }
-  label { display: block; font-weight: 600; color: #2D3748; margin-bottom: 6px; font-size: 14px; }
+  label { display: block; font-weight: 600; color: #A0AEC0; margin-bottom: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
   .zoek-rij { display: flex; gap: 10px; }
   input[type=text], input[type=email], input[type=number] {
-    border: 1.5px solid #E2E8F0; border-radius: 8px; padding: 10px 14px; font-size: 14px;
-    outline: none; color: #2D3748; width: 100%; font-family: inherit;
+    border: 1.5px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 10px 14px; font-size: 14px;
+    outline: none; color: #E2E8F0; width: 100%; font-family: inherit; background: rgba(255,255,255,0.06);
   }
-  input:focus { border-color: #3182CE; }
-  .hint { color: #A0AEC0; font-size: 12px; margin-top: 8px; }
-  .fout { color: #E53E3E; font-size: 13px; margin-top: 8px; display: none; }
+  input::placeholder { color: #4A5568; }
+  input:focus { border-color: #3B82F6; background: rgba(59,130,246,0.08); }
+  .fout { color: #FC8181; font-size: 13px; margin-top: 8px; display: none; }
   .fout.zichtbaar { display: block; }
 
   /* Knoppen */
   .btn-primary { background: #1E3A5F; color: white; border: none; border-radius: 8px; padding: 10px 20px; font-weight: 700; font-size: 14px; cursor: pointer; white-space: nowrap; }
-  .btn-groen { background: #27AE60; color: white; border: none; border-radius: 10px; padding: 14px; font-weight: 800; font-size: 15px; cursor: pointer; width: 100%; }
-  .btn-groen:disabled { background: #A0AEC0; cursor: not-allowed; }
+  .btn-primary:hover { background: #2a4f7c; }
+  .btn-groen { background: #16A34A; color: white; border: none; border-radius: 10px; padding: 14px; font-weight: 800; font-size: 15px; cursor: pointer; width: 100%; }
+  .btn-groen:hover { background: #15803d; }
+  .btn-groen:disabled { background: #374151; color: #6B7280; cursor: not-allowed; }
   .btn-navy { background: #1E3A5F; color: white; border: none; border-radius: 10px; padding: 12px 28px; font-weight: 700; font-size: 14px; cursor: pointer; }
 
-  /* Order info */
-  .order-info { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
-  .order-nr-label { font-size: 11px; color: #A0AEC0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
-  .order-nr { font-size: 20px; font-weight: 800; color: #1E3A5F; }
-  .order-meta { display: flex; gap: 24px; flex-wrap: wrap; }
-  .order-meta-item span:first-child { font-size: 11px; color: #A0AEC0; font-weight: 600; text-transform: uppercase; display: block; }
-  .order-meta-item span:last-child { font-size: 14px; color: #2D3748; font-weight: 600; }
-  .badge { border-radius: 20px; padding: 3px 12px; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
-  .badge-open { background: #FFFAF0; color: #E67E22; border: 1px solid #E67E22; }
-  .badge-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+  /* ===== INVULSCHERM LAYOUT ===== */
+  .order-header-card {
+    background: #C0392B;
+    border-radius: 16px; padding: 24px; margin-bottom: 14px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .order-nr-label { font-size: 10px; color: rgba(255,255,255,0.5); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .order-nr { font-size: 36px; font-weight: 900; color: white; line-height: 1; margin-bottom: 14px; }
+  .badge-row { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+  .badge { border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; }
+  .badge-open { background: rgba(230,126,34,0.2); color: #F6AD55; border: 1px solid rgba(230,126,34,0.4); }
+  .badge-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; background: currentColor; }
+  .badge-leverancier { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.2); }
+  .badge-historie { background: rgba(124,58,237,0.3); color: #C4B5FD; border: 1px solid rgba(124,58,237,0.4); cursor: pointer; }
+  .badge-historie:hover { background: rgba(124,58,237,0.5); }
+  .order-meta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .order-meta-item .meta-label { font-size: 10px; color: rgba(255,255,255,0.4); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+  .order-meta-item .meta-val { font-size: 14px; color: white; font-weight: 600; }
 
-  /* Tabel */
-  .tabel-wrap { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); border: 1px solid #E2E8F0; margin-bottom: 16px; overflow-x: auto; }
-  .tabel { width: 100%; border-collapse: collapse; min-width: 700px; }
-  .tabel thead tr { background: #1E3A5F; }
-  .tabel thead th { color: white; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; padding: 8px 6px; text-align: left; }
-  .tabel tbody tr:nth-child(even) { background: #F7FAFC; }
-  .tabel tbody tr:nth-child(odd) { background: white; }
-  .tabel tbody td { padding: 8px 6px; border-bottom: 1px solid #EDF2F7; vertical-align: middle; font-size: 12px; color: #2D3748; }
-  .tabel tfoot tr { background: #EBF8FF; border-top: 2px solid #3182CE; }
-  .tabel tfoot td { padding: 8px 6px; font-weight: 800; font-size: 13px; color: #1E3A5F; }
-  .artikel-code { font-family: monospace; font-size: 10px; color: #718096; }
+  /* Zoekbalk dark */
+  .zoekbalk-dark { background: #1A2535; border-radius: 10px 10px 0 0; padding: 10px 12px; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,0.08); border-bottom: none; }
+  .zoekbalk-dark input { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #E2E8F0; border-radius: 6px; padding: 7px 12px; font-size: 13px; outline: none; flex: 1; width: auto; }
+  .zoekbalk-dark input:focus { border-color: #3B82F6; }
+  .btn-wis-zoek { background: rgba(255,255,255,0.08); border: none; color: #A0AEC0; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .btn-wis-zoek:hover { background: rgba(255,255,255,0.14); }
 
-  /* Invoervelden in tabel */
-  .input-geleverd { width: 60px; border: 2px solid #E2E8F0; border-radius: 6px; padding: 4px 4px; font-size: 12px; font-weight: 700; text-align: center; outline: none; }
-  .input-geleverd.ok { border-color: #27AE60; color: #27AE60; background: #F0FFF4; }
-  .input-geleverd.afwijking { border-color: #E67E22; color: #E67E22; background: #FFFAF0; }
-  .afwijking-tekst { font-size: 10px; color: #E67E22; text-align: center; margin-top: 2px; }
+  /* Dark tabel */
+  .tabel-wrap { background: #1A2535; border-radius: 0 0 12px 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 14px; overflow-x: auto; }
+  .tabel { width: 100%; border-collapse: collapse; min-width: 620px; }
+  .tabel thead tr { background: #0F1923; }
+  .tabel thead th { color: rgba(255,255,255,0.45); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 10px 10px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .tabel tbody tr { border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .tabel tbody tr:hover { background: rgba(59,130,246,0.05); }
+  .tabel tbody td { padding: 10px 10px; vertical-align: middle; font-size: 13px; color: #CBD5E0; }
+  .tabel tfoot tr { background: rgba(59,130,246,0.1); border-top: 1px solid rgba(59,130,246,0.3); }
+  .tabel tfoot td { padding: 10px 10px; font-weight: 800; font-size: 13px; color: #93C5FD; }
+  .artikel-code { font-family: monospace; font-size: 10px; color: #4A5568; }
+  .regel-nr { width: 24px; height: 24px; background: rgba(255,255,255,0.08); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #A0AEC0; }
+  .omschrijving-cel { font-weight: 600; color: #E2E8F0; }
 
-  select.magazijn-select { width: 95px; border: 2px solid #E2E8F0; border-radius: 6px; padding: 4px 4px; font-size: 11px; outline: none; cursor: pointer; }
-  select.magazijn-select.ok { border-color: #3182CE; color: #1E3A5F; background: #EBF8FF; font-weight: 700; }
+  /* Invoervelden dark */
+  .input-geleverd { width: 64px; border: 1.5px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 6px 4px; font-size: 13px; font-weight: 700; text-align: center; outline: none; background: rgba(255,255,255,0.05); color: #E2E8F0; }
+  .input-geleverd:focus { border-color: #3B82F6; }
+  .input-geleverd.ok { border-color: #16A34A; color: #4ADE80; background: rgba(22,163,74,0.1); }
+  .input-geleverd.afwijking { border-color: #D97706; color: #FCD34D; background: rgba(217,119,6,0.1); }
+  .afwijking-tekst { font-size: 9px; color: #FCD34D; text-align: center; margin-top: 2px; }
 
-  .input-locatie { width: 80px; border: 2px solid #E2E8F0; border-radius: 6px; padding: 4px 4px; font-size: 11px; outline: none; }
-  .input-locatie.ok { border-color: #3182CE; background: #EBF8FF; font-weight: 600; font-family: monospace; }
+  select.magazijn-select { border: 1.5px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 5px 4px; font-size: 12px; outline: none; cursor: pointer; background: rgba(255,255,255,0.05); color: #CBD5E0; width: 100px; }
+  select.magazijn-select:focus { border-color: #3B82F6; }
+  select.magazijn-select.ok { border-color: #3B82F6; color: #93C5FD; background: rgba(59,130,246,0.1); font-weight: 700; }
+  select.magazijn-select option { background: #1A2535; color: #E2E8F0; }
 
-  /* Totaalbalk */
-  .totaal-balk { background: #EBF8FF; border: 1px solid #3182CE; border-radius: 10px; padding: 12px 20px; display: flex; gap: 32px; margin-bottom: 16px; }
-  .totaal-item span:first-child { font-size: 11px; color: #718096; font-weight: 600; text-transform: uppercase; display: block; }
-  .totaal-item span:last-child { font-size: 20px; font-weight: 800; }
-
-  /* Foto sectie */
-  .foto-sectie h3 { font-size: 14px; font-weight: 700; color: #1E3A5F; margin-bottom: 4px; }
-  .foto-sectie p { font-size: 13px; color: #718096; margin-bottom: 14px; }
-  .foto-knoppen { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
-  .btn-camera { background: #1E3A5F; color: white; border: none; border-radius: 8px; padding: 10px 18px; font-weight: 700; font-size: 13px; cursor: pointer; }
-  .btn-upload { background: white; color: #1E3A5F; border: 2px solid #1E3A5F; border-radius: 8px; padding: 10px 18px; font-weight: 700; font-size: 13px; cursor: pointer; }
-  .foto-grid { display: flex; gap: 12px; flex-wrap: wrap; }
-  .foto-thumb { position: relative; width: 100px; flex-shrink: 0; }
-  .foto-thumb img { width: 100px; height: 75px; object-fit: cover; border-radius: 8px; border: 2px solid #27AE60; display: block; }
-  .foto-verwijder { position: absolute; top: -8px; right: -8px; width: 22px; height: 22px; border-radius: 50%; background: #E53E3E; color: white; border: none; font-size: 14px; cursor: pointer; font-weight: 700; display: flex; align-items: center; justify-content: center; line-height: 1; }
-  .foto-label { font-size: 10px; color: #A0AEC0; text-align: center; margin-top: 3px; }
-  .foto-leeg { border: 2px dashed #E2E8F0; border-radius: 10px; padding: 24px; text-align: center; color: #A0AEC0; font-size: 13px; }
-  .foto-add { width: 100px; height: 75px; border: 2px dashed #E2E8F0; border-radius: 8px; background: #F7FAFC; color: #A0AEC0; font-size: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; border-style: dashed; }
+  .input-locatie { border: 1.5px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 5px 6px; font-size: 12px; outline: none; background: rgba(255,255,255,0.05); color: #CBD5E0; width: 90px; }
+  .input-locatie:focus { border-color: #3B82F6; }
+  .input-locatie.ok { border-color: #3B82F6; background: rgba(59,130,246,0.08); font-weight: 600; font-family: monospace; color: #93C5FD; }
 
   /* Foutmelding */
-  .fout-balk { background: #FFF5F5; border: 1px solid #E53E3E; border-radius: 8px; padding: 10px 14px; color: #E53E3E; font-size: 13px; margin-bottom: 12px; display: none; }
+  .fout-balk { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.4); border-radius: 8px; padding: 10px 14px; color: #FCA5A5; font-size: 13px; margin-bottom: 12px; display: none; }
   .fout-balk.zichtbaar { display: block; }
 
+  /* ===== SIDEBAR ===== */
+  .sidebar-section { background: #1A2535; border-radius: 14px; padding: 18px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 12px; }
+  .sidebar-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #4A5568; margin-bottom: 12px; }
+  .sidebar-foto-knoppen { display: flex; gap: 8px; margin-bottom: 14px; }
+  .btn-camera { background: #1E3A5F; color: white; border: none; border-radius: 8px; padding: 9px 14px; font-weight: 700; font-size: 13px; cursor: pointer; flex: 1; }
+  .btn-camera:hover { background: #2a4f7c; }
+  .btn-upload { background: rgba(255,255,255,0.08); color: #E2E8F0; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 9px 14px; font-weight: 700; font-size: 13px; cursor: pointer; flex: 1; }
+  .btn-upload:hover { background: rgba(255,255,255,0.14); }
+  .foto-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+  .foto-thumb { position: relative; flex-shrink: 0; width: 100px; }
+  .foto-thumb img { width: 100px; height: 65px; object-fit: cover; border-radius: 8px; border: 2px solid #16A34A; display: block; }
+  .foto-slot { width: 100px; height: 65px; background: rgba(255,255,255,0.04); border: 2px dashed rgba(255,255,255,0.15); border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #4A5568; font-size: 11px; font-weight: 600; cursor: pointer; }
+  .foto-slot-icon { font-size: 20px; opacity: 0.4; }
+  .foto-verwijder { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: #DC2626; color: white; border: none; font-size: 13px; cursor: pointer; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .foto-label { font-size: 10px; color: #4A5568; text-align: center; margin-top: 4px; font-weight: 600; }
+  .foto-hint { font-size: 11px; color: #D97706; margin-top: 8px; display: flex; align-items: center; gap: 5px; }
+
+  /* Opmerking textarea dark */
+  textarea { background: rgba(255,255,255,0.05); border: 1.5px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 10px 12px; font-size: 13px; resize: vertical; outline: none; color: #E2E8F0; font-family: inherit; width: 100%; }
+  textarea::placeholder { color: #4A5568; }
+  textarea:focus { border-color: #3B82F6; }
+
+  /* Snelle invoer sidebar */
+  .snelle-invoer-veld { margin-bottom: 10px; }
+  .snelle-invoer-veld select, .snelle-invoer-veld input { width: 100%; background: rgba(255,255,255,0.06); border: 1.5px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 9px 12px; font-size: 13px; color: #E2E8F0; outline: none; font-family: inherit; }
+  .snelle-invoer-veld select option { background: #1A2535; }
+  .snelle-invoer-veld select:focus, .snelle-invoer-veld input:focus { border-color: #3B82F6; }
+  .btn-alles-compleet { background: linear-gradient(135deg, #1D4ED8, #0EA5E9); color: white; border: none; border-radius: 10px; padding: 12px; font-weight: 800; font-size: 14px; cursor: pointer; width: 100%; margin-top: 4px; }
+  .btn-alles-compleet:hover { opacity: 0.9; }
+  .btn-alles-wis { background: transparent; color: #F87171; border: 1px solid rgba(248,113,113,0.3); border-radius: 8px; padding: 7px 14px; font-weight: 700; font-size: 12px; cursor: pointer; width: 100%; margin-top: 6px; }
+  .btn-alles-wis:hover { background: rgba(248,113,113,0.08); }
+
+  /* Bevestig knop */
+  .btn-bevestig-groot { background: linear-gradient(135deg, #16A34A, #15803D); color: white; border: none; border-radius: 12px; padding: 16px; font-weight: 800; font-size: 15px; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .btn-bevestig-groot:hover { opacity: 0.92; }
+  .btn-bevestig-groot:disabled { background: #374151; color: #6B7280; cursor: not-allowed; }
+
   /* Bevestigd scherm */
-  .bevestigd-center { text-align: center; padding-top: 40px; }
-  .check-cirkel { width: 80px; height: 80px; background: #F0FFF4; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 40px; }
+  .bevestigd-center { text-align: center; padding-top: 40px; max-width: 700px; margin: 0 auto; }
+  .check-cirkel { width: 80px; height: 80px; background: rgba(22,163,74,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 40px; border: 2px solid rgba(22,163,74,0.3); }
   .samenvatting-tabel { width: 100%; border-collapse: collapse; }
-  .samenvatting-tabel th { font-size: 11px; font-weight: 700; color: #A0AEC0; text-transform: uppercase; padding: 6px 0; border-bottom: 2px solid #1E3A5F; text-align: left; }
-  .samenvatting-tabel td { padding: 8px 0; border-bottom: 1px solid #EDF2F7; font-size: 13px; }
-  .kleur-ok { color: #27AE60; font-weight: 700; }
-  .kleur-afwijking { color: #E67E22; font-weight: 700; }
+  .samenvatting-tabel th { font-size: 11px; font-weight: 700; color: #4A5568; text-transform: uppercase; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.08); text-align: left; }
+  .samenvatting-tabel td { padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; color: #CBD5E0; }
+  .kleur-ok { color: #4ADE80; font-weight: 700; }
+  .kleur-afwijking { color: #FCD34D; font-weight: 700; }
 
   /* Login scherm */
-  .login-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: calc(100vh - 60px); padding: 24px 16px; }
-  .login-card { background: white; border-radius: 16px; padding: 36px 28px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); border: 1px solid #E2E8F0; width: 100%; max-width: 400px; text-align: center; }
-  .login-logo { width: 64px; height: 64px; background: #EBF8FF; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 20px; }
-  .login-titel { color: #1E3A5F; font-size: 20px; font-weight: 800; margin-bottom: 6px; }
-  .login-subtitel { color: #718096; font-size: 14px; margin-bottom: 28px; }
+  .login-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: calc(100vh - 56px); padding: 24px 16px; }
+  .login-card { background: #1A2535; border-radius: 16px; padding: 36px 28px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08); width: 100%; max-width: 400px; text-align: center; }
+  .login-logo { width: 64px; height: 64px; background: rgba(59,130,246,0.1); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; border: 1px solid rgba(59,130,246,0.2); }
+  .login-titel { color: white; font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+  .login-subtitel { color: #4A5568; font-size: 14px; margin-bottom: 28px; }
   .medewerker-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
-  .btn-medewerker { background: #F7FAFC; border: 2px solid #E2E8F0; border-radius: 10px; padding: 14px 10px; font-size: 14px; font-weight: 700; color: #2D3748; cursor: pointer; transition: all 0.15s; }
-  .btn-medewerker:hover { border-color: #3182CE; background: #EBF8FF; color: #1E3A5F; }
-  .btn-medewerker.geselecteerd { border-color: #1E3A5F; background: #1E3A5F; color: white; }
-  .header-medewerker { color: rgba(255,255,255,0.8); font-size: 13px; margin-left: auto; }
+  .btn-medewerker { background: rgba(255,255,255,0.05); border: 1.5px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 14px 10px; font-size: 14px; font-weight: 700; color: #CBD5E0; cursor: pointer; transition: all 0.15s; }
+  .btn-medewerker:hover { border-color: #3B82F6; background: rgba(59,130,246,0.1); color: white; }
+  .btn-medewerker.geselecteerd { border-color: #3B82F6; background: #1E3A5F; color: white; }
 
-  /* Historie */
-  .btn-historie { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.4); color: white; border-radius: 6px; padding: 6px 14px; cursor: pointer; font-size: 13px; font-weight: 600; }
-  .btn-historie:hover { background: rgba(255,255,255,0.25); }
-  .historie-order-card { background: white; border-radius: 10px; border: 1px solid #E2E8F0; margin-bottom: 14px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-  .historie-order-header { background: #1E3A5F; color: white; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .historie-order-card { background: #1A2535; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 14px; overflow: hidden; }
+  .historie-order-header { background: #0F1923; color: white; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.08); }
   .historie-order-nr { font-size: 16px; font-weight: 800; }
-  .historie-order-meta { font-size: 12px; color: rgba(255,255,255,0.75); }
+  .historie-order-meta { font-size: 12px; color: rgba(255,255,255,0.5); }
   .historie-tabel { width: 100%; border-collapse: collapse; font-size: 12px; }
-  .historie-tabel th { background: #F7FAFC; color: #718096; font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 7px 10px; text-align: left; border-bottom: 1px solid #E2E8F0; }
-  .historie-tabel td { padding: 8px 10px; border-bottom: 1px solid #EDF2F7; color: #2D3748; }
+  .historie-tabel th { background: rgba(255,255,255,0.03); color: #4A5568; font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 7px 10px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .historie-tabel td { padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #CBD5E0; }
   .historie-tabel tr:last-child td { border-bottom: none; }
-  .historie-leeg { text-align: center; color: #A0AEC0; padding: 40px; font-size: 14px; }
-
-  /* Alles compleet balk */
-  .alles-compleet-balk {
-    background: #F0FFF4;
-    border: 2px solid #27AE60;
-    border-radius: 10px;
-    padding: 12px 16px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-    flex-wrap: wrap;
-  }
-  .alles-compleet-balk label { margin: 0; font-size: 13px; white-space: nowrap; }
-  .alles-compleet-balk select, .alles-compleet-balk input[type=text] {
-    border: 2px solid #27AE60; border-radius: 6px; padding: 6px 8px; font-size: 13px;
-    outline: none; color: #2D3748; width: auto;
-  }
-  .btn-alles-compleet {
-    background: #27AE60; color: white; border: none; border-radius: 8px;
-    padding: 8px 18px; font-weight: 800; font-size: 13px; cursor: pointer; white-space: nowrap;
-  }
-  .btn-alles-compleet:hover { background: #219150; }
-  .btn-alles-wis {
-    background: white; color: #E53E3E; border: 2px solid #E53E3E; border-radius: 8px;
-    padding: 6px 14px; font-weight: 700; font-size: 12px; cursor: pointer; white-space: nowrap;
-  }
-  .btn-alles-wis:hover { background: #FFF5F5; }
+  .historie-leeg { text-align: center; color: #4A5568; padding: 40px; font-size: 14px; }
 
   /* Responsive */
   @media (max-width: 600px) {
     .tabel { min-width: 500px; }
     .zoek-rij { flex-direction: column; }
     .btn-primary { width: 100%; }
+    .order-meta-grid { grid-template-columns: 1fr 1fr; }
+    .order-header-card > div { flex-direction: column; }
+    .btn-bevestig-groot { min-width: unset !important; }
   }
 </style>
 <body>
@@ -201,8 +215,8 @@
 </div>
 
 <!-- SCHERM 1: ZOEKEN -->
-<div class="scherm" id="schermZoek">
-  <h1>Inkomende goederen verwerken</h1>
+<div class="scherm" id="schermZoek" style="max-width:500px;margin:0 auto;">
+  <h1>Inkomende goederen</h1>
   <p class="subtitel">Scan of typ het inkoopnummer van de pakbon om te beginnen.</p>
   <div class="card">
     <label>Inkoopnummer</label>
@@ -226,106 +240,124 @@
 <!-- SCHERM 2: INVULLEN -->
 <div class="scherm" id="schermInvullen">
 
-  <!-- Order info -->
-  <div class="card">
-    <div class="order-info">
-      <div>
-        <div class="order-nr-label">Inkoopnummer</div>
-        <div class="order-nr" id="toonNummer"></div>
+  <!-- HOOFD KOLOM -->
+  <div class="invul-hoofd">
+
+    <!-- Order header card: alleen order info -->
+    <div class="order-header-card">
+      <div class="order-nr-label">Inkoopnummer</div>
+      <div class="order-nr" id="toonNummer"></div>
+      <div class="badge-row">
+        <span class="badge badge-open"><span class="badge-dot"></span>Open</span>
+        <span class="badge badge-leverancier" id="toonLeverancier"></span>
+        <button class="badge badge-historie" onclick="toonHistorie()">🕐 Historie</button>
       </div>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <button class="btn-primary" style="background:#7B61FF;font-size:13px;padding:7px 16px;" onclick="toonHistorie()">🕐 Historie</button>
-        <span class="badge badge-open"><span class="badge-dot" style="background:#E67E22"></span>Open</span>
+      <div class="order-meta-grid">
+        <div class="order-meta-item">
+          <div class="meta-label">Datum</div>
+          <div class="meta-val" id="toonDatum"></div>
+        </div>
+        <div class="order-meta-item">
+          <div class="meta-label">Verkoopnr.</div>
+          <div class="meta-val" id="toonVerkoopnummer"></div>
+        </div>
+        <div class="order-meta-item">
+          <div class="meta-label">Klant</div>
+          <div class="meta-val" id="toonKlantreferentie"></div>
+        </div>
       </div>
     </div>
-    <div class="order-meta">
-      <div class="order-meta-item"><span>Leverancier</span><span id="toonLeverancier"></span></div>
-      <div class="order-meta-item"><span>Datum</span><span id="toonDatum"></span></div>
-      <div class="order-meta-item"><span>Artikelen</span><span id="toonAantal"></span></div>
-      <div class="order-meta-item"><span>Verkoopnummer</span><span id="toonVerkoopnummer"></span></div>
-      <div class="order-meta-item"><span>Klantreferentie</span><span id="toonKlantreferentie"></span></div>
+
+    <!-- Opmerking onder header -->
+    <div class="sidebar-section" style="margin-bottom:14px;">
+      <div class="sidebar-label">Opmerking</div>
+      <textarea id="opmerking" rows="2" placeholder="Optionele opmerking..."></textarea>
     </div>
-  </div>
 
-  <!-- Alles compleet balk -->
-  <div class="alles-compleet-balk">
-    <span style="font-weight:800;color:#27AE60;font-size:14px;">✅ Alles compleet?</span>
-    <label>Magazijn:</label>
-    <select id="allesMagazijn">
-      <option value="">— kies —</option>
-      <option value="1">1</option>
-      <option value="2">2</option>
-      <option value="3">3</option>
-      <option value="4">4</option>
-      <option value="5">5</option>
-    </select>
-    <label>Locatie:</label>
-    <input type="text" id="allesLocatie" placeholder="Bijv. A-01-01" style="width:110px;">
-    <button class="btn-alles-compleet" onclick="allesCompleetInvullen()">⚡ Alles invullen</button>
-    <button class="btn-alles-wis" onclick="allesWissen()">✕ Wis alles</button>
-  </div>
+    <!-- Twee kolommen: Snelle invoer + Foto/Bevestigen -->
+    <div style="display:flex;gap:14px;margin-bottom:10px;">
 
-  <!-- Zoekbalk artikelen -->
-  <div style="background:#1E3A5F;border-radius:12px 12px 0 0;padding:10px 12px;display:flex;align-items:center;gap:10px;">
-    <span style="color:white;font-size:15px;">🔍</span>
-    <input type="text" id="artikelZoek" placeholder="Zoek op Art.nr of Art.lev..." oninput="filterArtikelen()" style="flex:1;border:none;border-radius:6px;padding:7px 12px;font-size:13px;outline:none;color:#2D3748;">
-    <button onclick="document.getElementById('artikelZoek').value='';filterArtikelen();" style="background:rgba(255,255,255,0.2);border:none;color:white;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:13px;font-weight:600;">✕ Wis</button>
-  </div>
+      <!-- Links: Snelle invoer (helft) -->
+      <div class="sidebar-section" style="flex:1;margin-bottom:0;">
+        <div class="sidebar-label">Snelle Invoer</div>
+        <div class="snelle-invoer-veld">
+          <label>Magazijn (alle regels)</label>
+          <select id="allesMagazijn">
+            <option value="">— kies —</option>
+            <option value="1">Magazijn 1</option>
+            <option value="2">Magazijn 2</option>
+            <option value="3">Magazijn 3</option>
+            <option value="4">Magazijn 4</option>
+            <option value="5">Magazijn 5</option>
+          </select>
+        </div>
+        <div class="snelle-invoer-veld">
+          <label>Locatie (alle regels)</label>
+          <input type="text" id="allesLocatie" placeholder="Bijv. A-01-01">
+        </div>
+        <button class="btn-alles-compleet" onclick="allesCompleetInvullen()">⚡ Alles compleet</button>
+        <button class="btn-alles-wis" onclick="allesWissen()" style="margin-top:6px;">✕ Wis alles</button>
+      </div>
 
-  <!-- Artikeltabel -->
-  <div class="tabel-wrap" style="border-radius:0 0 12px 12px;">
-    <table class="tabel">
-      <thead>
-        <tr>
-          <th>Art.nr</th>
-          <th style="cursor:pointer;user-select:none;" onclick="sorteerOpArtlev()">Art.lev. <span id="sortPijl">↕</span></th>
-          <th>Omschrijving</th>
-          <th>Opmerking</th>
-          <th>Verwacht</th>
-          <th>Geleverd ✎</th>
-          <th>Magazijn nr.</th>
-          <th>Locatienr. ✎</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="regelsTbody"></tbody>
-      <tfoot>
-        <tr>
-          <td colspan="3">TOTAAL</td>
-          <td id="totaalVerwacht">0</td>
-          <td id="totaalGeleverd">—</td>
-          <td></td><td></td><td></td>
-        </tr>
-      </tfoot>
-    </table>
-  </div>
+      <!-- Rechts: Foto's + Bevestigen (helft) -->
+      <div class="sidebar-section" style="flex:1;margin-bottom:0;display:flex;flex-direction:column;gap:10px;">
+        <div class="sidebar-label">Foto's Pakbon</div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-camera" style="flex:1;" onclick="document.getElementById('cameraInput').click()">📸 Camera</button>
+          <button class="btn-upload" style="flex:1;" onclick="document.getElementById('fotoInput').click()">🖼️ Uploaden</button>
+          <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="verwerkFotos(this.files)">
+          <input type="file" id="fotoInput" accept="image/*" multiple style="display:none" onchange="verwerkFotos(this.files)">
+        </div>
+        <div class="foto-grid" id="fotoGrid" style="flex-wrap:nowrap;">
+          <div class="foto-slot" style="flex:1;" onclick="document.getElementById('fotoInput').click()"><div class="foto-slot-icon">📷</div>Foto 1</div>
+          <div class="foto-slot" style="flex:1;" onclick="document.getElementById('fotoInput').click()"><div class="foto-slot-icon">📷</div>Foto 2</div>
+        </div>
+        <div class="foto-hint" id="fotoHint">⚠ Minimaal 2 foto's vereist</div>
+        <button class="btn-bevestig-groot" id="btnBevestig" onclick="bevestig()">✅ Bevestigen &amp; Versturen</button>
+      </div>
 
-  <!-- Foto sectie -->
-  <div class="card foto-sectie">
-    <h3>📷 Foto pakbon leverancier</h3>
-    <p>Maak 2 fotos of upload 2 afbeeldingen van de pakbon. Deze worden meegestuurd met de e-mail.</p>
-    <div class="foto-knoppen">
-      <button class="btn-camera" onclick="document.getElementById('cameraInput').click()">📸 Camera</button>
-      <button class="btn-upload" onclick="document.getElementById('fotoInput').click()">🖼️ Uploaden</button>
-      <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="verwerkFotos(this.files)">
-      <input type="file" id="fotoInput" accept="image/*" multiple style="display:none" onchange="verwerkFotos(this.files)">
     </div>
-    <div class="foto-grid" id="fotoGrid">
-      <div class="foto-leeg" id="fotoLeeg">Voeg 2 fotos toe van de pakbon (verplicht)</div>
+
+    <!-- Zoekbalk -->
+    <div class="zoekbalk-dark">
+      <span style="color:#4A5568;font-size:15px;">🔍</span>
+      <input type="text" id="artikelZoek" placeholder="Zoek op Art.nr of Art.lev..." oninput="filterArtikelen()">
+      <button class="btn-wis-zoek" onclick="document.getElementById('artikelZoek').value='';filterArtikelen();">✕ Wis</button>
     </div>
-  </div>
 
-  <!-- Opmerking -->
-  <div class="card">
-    <div>
-      <label>Opmerking (optioneel)</label>
-      <textarea id="opmerking" rows="2" placeholder="Bijv. doos beschadigd, deellevering..." style="width:100%;border:1.5px solid #E2E8F0;border-radius:8px;padding:9px 12px;font-size:13px;resize:vertical;outline:none;color:#2D3748;font-family:inherit"></textarea>
+    <!-- Artikeltabel -->
+    <div class="tabel-wrap">
+      <table class="tabel">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Art.nr ↕</th>
+            <th style="cursor:pointer;user-select:none;" onclick="sorteerOpArtlev()">Lev.code <span id="sortPijl">↕</span></th>
+            <th>Omschrijving</th>
+            <th>Besteld</th>
+            <th>Geleverd ✎</th>
+            <th>Opm.</th>
+            <th>Magazijn</th>
+            <th>Locatie</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="regelsTbody"></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4">TOTAAL</td>
+            <td id="totaalVerwachtFoot">0</td>
+            <td id="totaalGeleverdFoot">—</td>
+            <td colspan="4"></td>
+          </tr>
+        </tfoot>
+      </table>
     </div>
-  </div>
 
-  <div class="fout-balk" id="invulFout"></div>
+    <div class="fout-balk" id="invulFout"></div>
 
-  <button class="btn-groen" id="btnBevestig" onclick="bevestig()">✅ Bevestigen &amp; Melding versturen</button>
+  </div><!-- /invul-hoofd -->
+
 </div>
 
 <!-- SCHERM 3: BEVESTIGD -->
@@ -337,8 +369,8 @@
 
     <div id="fotoBevestigd" style="display:flex;justify-content:center;gap:10px;margin-bottom:24px;flex-wrap:wrap"></div>
 
-    <div class="card" style="text-align:left">
-      <div style="font-weight:700;color:#1E3A5F;margin-bottom:12px;font-size:14px">Samenvatting</div>
+    <div class="card" style="text-align:left;max-width:700px;margin:0 auto 24px;">
+      <div style="font-weight:700;color:#93C5FD;margin-bottom:12px;font-size:14px">Samenvatting</div>
       <table class="samenvatting-tabel">
         <thead>
           <tr>
@@ -472,7 +504,7 @@ function allesCompleetInvullen() {
   });
   document.querySelectorAll('.afwijking-tekst').forEach(el => el.textContent = '');
 
-  updateTotaal();
+  updateTotalen();
   slaOp();
 }
 
@@ -502,7 +534,7 @@ function allesWissen() {
   document.getElementById('allesMagazijn').value = '';
   document.getElementById('allesLocatie').value = '';
 
-  updateTotaal();
+  updateTotalen();
   slaOp();
 }
 
@@ -607,7 +639,6 @@ function bouwInvulScherm() {
   document.getElementById('toonNummer').textContent = huidigOrder.nummer;
   document.getElementById('toonLeverancier').textContent = huidigOrder.leverancier;
   document.getElementById('toonDatum').textContent = new Date().toLocaleDateString('nl-NL');
-  document.getElementById('toonAantal').textContent = regels.length + ' artikelen';
   document.getElementById('toonVerkoopnummer').textContent = huidigOrder.verkoopnummer || '—';
   document.getElementById('toonKlantreferentie').textContent = huidigOrder.klantreferentie || '—';
 
@@ -637,23 +668,24 @@ function herbouwRegel(i) {
   const tr = document.createElement('tr');
   tr.dataset.regel = i;
   tr.innerHTML = `
+    <td><span class="regel-nr">${i+1}</span></td>
     <td><span class="artikel-code">${r.artnr ? String(r.artnr).split(',').join('.') : '—'}</span></td>
     <td><span class="artikel-code">${r.artikel}</span></td>
-    <td>${r.omschrijving}</td>
-    <td style="font-size:12px;color:#718096;">${r.opmerking}</td>
-    <td style="font-weight:800;color:#1E3A5F;text-align:center">${r.verwacht}</td>
+    <td class="omschrijving-cel">${r.omschrijving}</td>
+    <td style="font-weight:800;color:#93C5FD;text-align:center">${r.verwacht}</td>
     <td>
       <input type="number" min="0" class="input-geleverd" id="gel_${i}" placeholder="0" value="${r.geleverd}" oninput="updateGeleverd(${i})" onchange="updateGeleverdKlaar(${i})">
       <div class="afwijking-tekst" id="afw_${i}" style="display:${r.geleverd !== '' && Number(r.geleverd) !== r.verwacht ? 'block' : 'none'}">⚠ afwijking</div>
     </td>
+    <td style="font-size:11px;color:#4A5568;">${r.opmerking}</td>
     <td>
-      ${r.splits.length === 0 ? `<select class="magazijn-select${r.magazijn ? ' ok' : ''}" id="mag_${i}" onchange="updateMagazijn(${i})"><option value="">— kies —</option>${magazijnOpties(r.magazijn)}</select>` : '<span style="font-size:11px;color:#A0AEC0;">zie splits</span>'}
+      ${r.splits.length === 0 ? `<select class="magazijn-select${r.magazijn ? ' ok' : ''}" id="mag_${i}" onchange="updateMagazijn(${i})"><option value="">— kies —</option>${magazijnOpties(r.magazijn)}</select>` : '<span style="font-size:11px;color:#4A5568;">zie splits</span>'}
     </td>
     <td>
-      ${r.splits.length === 0 ? `<input type="text" class="input-locatie${r.locatie ? ' ok' : ''}" id="loc_${i}" placeholder="Bijv. A-01-03" value="${r.locatie}" oninput="updateLocatie(${i})">` : ''}
+      ${r.splits.length === 0 ? `<input type="text" class="input-locatie${r.locatie ? ' ok' : ''}" id="loc_${i}" placeholder="A-01-03" value="${r.locatie}" oninput="updateLocatie(${i})">` : ''}
     </td>
     <td>
-      ${Number(r.geleverd) > 0 ? `<button id="splitBtn_${i}" class="btn-primary" style="font-size:10px;padding:4px 7px;" onclick="voegSplitToe(${i})">+ Splitsen</button>` : `<button id="splitBtn_${i}" class="btn-primary" style="font-size:10px;padding:4px 7px;display:none;" onclick="voegSplitToe(${i})">+ Splitsen</button>`}
+      ${Number(r.geleverd) > 0 ? `<button id="splitBtn_${i}" class="btn-primary" style="font-size:10px;padding:4px 7px;" onclick="voegSplitToe(${i})">+ Split</button>` : `<button id="splitBtn_${i}" class="btn-primary" style="font-size:10px;padding:4px 7px;display:none;" onclick="voegSplitToe(${i})">+ Split</button>`}
     </td>
   `;
   tbody.appendChild(tr);
@@ -801,10 +833,37 @@ function sorteerOpArtlev() {
 function updateTotalen() {
   const tv = regels.reduce((s, r) => s + r.verwacht, 0);
   const tg = regels.reduce((s, r) => s + (Number(r.geleverd) || 0), 0);
+  const ingevuld = regels.filter(r => r.geleverd !== '').length;
   const heeftGeleverd = regels.some(r => r.geleverd !== '');
-  document.getElementById('totaalVerwacht').textContent = tv;
-  document.getElementById('totaalGeleverd').textContent = heeftGeleverd ? tg : '—';
-  document.getElementById('totaalGeleverd').style.color = heeftGeleverd && tg !== tv ? '#E67E22' : '#27AE60';
+  const pct = regels.length > 0 ? Math.round((ingevuld / regels.length) * 100) : 0;
+
+  // Voortgangsbalk
+  const pctEl = document.getElementById('voortgangPct');
+  const fillEl = document.getElementById('voortgangFill');
+  const invEl = document.getElementById('voortgangIngevuld');
+  const totEl = document.getElementById('voortgangTotaal');
+  if (pctEl) pctEl.textContent = pct + '%';
+  if (fillEl) fillEl.style.width = pct + '%';
+  if (invEl) invEl.textContent = ingevuld;
+  if (totEl) totEl.textContent = regels.length;
+
+  // Sidebar stats
+  const tvEl = document.getElementById('totaalVerwacht');
+  const tgEl = document.getElementById('totaalGeleverd');
+  if (tvEl) tvEl.textContent = tv;
+  if (tgEl) {
+    tgEl.textContent = heeftGeleverd ? tg : '—';
+    tgEl.style.color = heeftGeleverd && tg !== tv ? '#FCD34D' : '#4ADE80';
+  }
+
+  // Tabel footer
+  const tvf = document.getElementById('totaalVerwachtFoot');
+  const tgf = document.getElementById('totaalGeleverdFoot');
+  if (tvf) tvf.textContent = tv;
+  if (tgf) {
+    tgf.textContent = heeftGeleverd ? tg : '—';
+    tgf.style.color = heeftGeleverd && tg !== tv ? '#FCD34D' : '#4ADE80';
+  }
 }
 
 // =====================
@@ -840,25 +899,30 @@ function verwijderFoto(i) {
 
 function bouwFotoGrid() {
   const grid = document.getElementById('fotoGrid');
-  const leeg = document.getElementById('fotoLeeg');
+  const hint = document.getElementById('fotoHint');
+  if (!grid) return;
   grid.innerHTML = '';
-  if (fotos.length === 0) {
-    grid.appendChild(leeg || (() => { const d = document.createElement('div'); d.className = 'foto-leeg'; d.id = 'fotoLeeg'; d.textContent = 'Voeg 2 fotos toe van de pakbon (verplicht)'; return d; })());
-    return;
+
+  // Render foto's + lege slots tot minimaal 2
+  const slots = Math.max(2, fotos.length + (fotos.length < 2 ? 1 : 0));
+  for (let i = 0; i < slots; i++) {
+    if (fotos[i]) {
+      const div = document.createElement('div');
+      div.className = 'foto-thumb';
+      div.style.cssText = 'width:120px;';
+      div.innerHTML = `<img src="${fotos[i].dataUrl}" alt="Pakbon ${i+1}"><button class="foto-verwijder" onclick="verwijderFoto(${i})">×</button><div class="foto-label">Foto ${i+1}</div>`;
+      grid.appendChild(div);
+    } else {
+      const slot = document.createElement('div');
+      slot.className = 'foto-slot';
+      slot.innerHTML = `<div class="foto-slot-icon">📷</div>Foto ${i+1}`;
+      slot.style.cursor = 'pointer';
+      slot.onclick = () => document.getElementById('fotoInput').click();
+      grid.appendChild(slot);
+    }
   }
-  fotos.forEach((foto, i) => {
-    const div = document.createElement('div');
-    div.className = 'foto-thumb';
-    div.innerHTML = `<img src="${foto.dataUrl}" alt="Pakbon ${i+1}"><button class="foto-verwijder" onclick="verwijderFoto(${i})">×</button><div class="foto-label">Foto ${i+1}</div>`;
-    grid.appendChild(div);
-  });
-  if (fotos.length < 2) {
-  const add = document.createElement('button');
-  add.className = 'foto-add';
-  add.textContent = '+';
-  add.onclick = () => document.getElementById('fotoInput').click();
-  grid.appendChild(add);
-  }
+
+  if (hint) hint.style.display = fotos.length >= 2 ? 'none' : 'flex';
 }
 
 // =====================
